@@ -1,0 +1,677 @@
+{
+    "BL01": {
+        "stationID": "BL01",
+        "stationName": "頂埔",
+        "stationSid": "076"
+    },
+    "BL02": {
+        "stationID": "BL02",
+        "stationName": "永寧",
+        "stationSid": "077"
+    },
+    "BL03": {
+        "stationID": "BL03",
+        "stationName": "土城",
+        "stationSid": "078"
+    },
+    "BL04": {
+        "stationID": "BL04",
+        "stationName": "海山",
+        "stationSid": "079"
+    },
+    "BL05": {
+        "stationID": "BL05",
+        "stationName": "亞東醫院",
+        "stationSid": "080"
+    },
+    "BL06": {
+        "stationID": "BL06",
+        "stationName": "府中",
+        "stationSid": "081"
+    },
+    "BL07": {
+        "stationID": "BL07",
+        "stationName": "板橋",
+        "stationSid": "082"
+    },
+    "BL08": {
+        "stationID": "BL08",
+        "stationName": "新埔",
+        "stationSid": "083"
+    },
+    "BL09": {
+        "stationID": "BL09",
+        "stationName": "江子翠",
+        "stationSid": "084"
+    },
+    "BL10": {
+        "stationID": "BL10",
+        "stationName": "龍山寺",
+        "stationSid": "085"
+    },
+    "BL11": {
+        "stationID": "BL11",
+        "stationName": "西門",
+        "stationSid": "086"
+    },
+    "BL12": {
+        "stationID": "BL12",
+        "stationName": "台北車站",
+        "stationSid": "051"
+    },
+    "BL13": {
+        "stationID": "BL13",
+        "stationName": "善導寺",
+        "stationSid": "088"
+    },
+    "BL14": {
+        "stationID": "BL14",
+        "stationName": "忠孝新生",
+        "stationSid": "089"
+    },
+    "BL15": {
+        "stationID": "BL15",
+        "stationName": "忠孝復興",
+        "stationSid": "010"
+    },
+    "BL16": {
+        "stationID": "BL16",
+        "stationName": "忠孝敦化",
+        "stationSid": "091"
+    },
+    "BL17": {
+        "stationID": "BL17",
+        "stationName": "國父紀念館",
+        "stationSid": "092"
+    },
+    "BL18": {
+        "stationID": "BL18",
+        "stationName": "市政府",
+        "stationSid": "093"
+    },
+    "BL19": {
+        "stationID": "BL19",
+        "stationName": "永春",
+        "stationSid": "094"
+    },
+    "BL20": {
+        "stationID": "BL20",
+        "stationName": "後山埤",
+        "stationSid": "095"
+    },
+    "BL21": {
+        "stationID": "BL21",
+        "stationName": "昆陽",
+        "stationSid": "096"
+    },
+    "BL22": {
+        "stationID": "BL22",
+        "stationName": "南港",
+        "stationSid": "097"
+    },
+    "BL23": {
+        "stationID": "BL23",
+        "stationName": "南港展覽館",
+        "stationSid": "031"
+    },
+    "BR01": {
+        "stationID": "BR01",
+        "stationName": "動物園",
+        "stationSid": "019"
+    },
+    "BR02": {
+        "stationID": "BR02",
+        "stationName": "木柵",
+        "stationSid": "018"
+    },
+    "BR03": {
+        "stationID": "BR03",
+        "stationName": "萬芳社區",
+        "stationSid": "017"
+    },
+    "BR04": {
+        "stationID": "BR04",
+        "stationName": "萬芳醫院",
+        "stationSid": "016"
+    },
+    "BR05": {
+        "stationID": "BR05",
+        "stationName": "辛亥",
+        "stationSid": "015"
+    },
+    "BR06": {
+        "stationID": "BR06",
+        "stationName": "麟光",
+        "stationSid": "014"
+    },
+    "BR07": {
+        "stationID": "BR07",
+        "stationName": "六張犁",
+        "stationSid": "013"
+    },
+    "BR08": {
+        "stationID": "BR08",
+        "stationName": "科技大樓",
+        "stationSid": "012"
+    },
+    "BR09": {
+        "stationID": "BR09",
+        "stationName": "大安",
+        "stationSid": "011"
+    },
+    "BR10": {
+        "stationID": "BR10",
+        "stationName": "忠孝復興",
+        "stationSid": "010"
+    },
+    "BR11": {
+        "stationID": "BR11",
+        "stationName": "南京復興",
+        "stationSid": "009"
+    },
+    "BR12": {
+        "stationID": "BR12",
+        "stationName": "中山國中",
+        "stationSid": "008"
+    },
+    "BR13": {
+        "stationID": "BR13",
+        "stationName": "松山機場",
+        "stationSid": "007"
+    },
+    "BR14": {
+        "stationID": "BR14",
+        "stationName": "大直",
+        "stationSid": "021"
+    },
+    "BR15": {
+        "stationID": "BR15",
+        "stationName": "劍南路",
+        "stationSid": "022"
+    },
+    "BR16": {
+        "stationID": "BR16",
+        "stationName": "西湖",
+        "stationSid": "023"
+    },
+    "BR17": {
+        "stationID": "BR17",
+        "stationName": "港墘",
+        "stationSid": "024"
+    },
+    "BR18": {
+        "stationID": "BR18",
+        "stationName": "文德",
+        "stationSid": "025"
+    },
+    "BR19": {
+        "stationID": "BR19",
+        "stationName": "內湖",
+        "stationSid": "026"
+    },
+    "BR20": {
+        "stationID": "BR20",
+        "stationName": "大湖公園",
+        "stationSid": "027"
+    },
+    "BR21": {
+        "stationID": "BR21",
+        "stationName": "葫洲",
+        "stationSid": "028"
+    },
+    "BR22": {
+        "stationID": "BR22",
+        "stationName": "東湖",
+        "stationSid": "029"
+    },
+    "BR23": {
+        "stationID": "BR23",
+        "stationName": "南港軟體園區",
+        "stationSid": "030"
+    },
+    "BR24": {
+        "stationID": "BR24",
+        "stationName": "南港展覽館",
+        "stationSid": "031"
+    },
+    "G01": {
+        "stationID": "G01",
+        "stationName": "新店",
+        "stationSid": "033"
+    },
+    "G02": {
+        "stationID": "G02",
+        "stationName": "新店區公所",
+        "stationSid": "034"
+    },
+    "G03": {
+        "stationID": "G03",
+        "stationName": "七張",
+        "stationSid": "035"
+    },
+    "G04": {
+        "stationID": "G04",
+        "stationName": "大坪林",
+        "stationSid": "036"
+    },
+    "G05": {
+        "stationID": "G05",
+        "stationName": "景美",
+        "stationSid": "037"
+    },
+    "G06": {
+        "stationID": "G06",
+        "stationName": "萬隆",
+        "stationSid": "038"
+    },
+    "G07": {
+        "stationID": "G07",
+        "stationName": "公館",
+        "stationSid": "039"
+    },
+    "G08": {
+        "stationID": "G08",
+        "stationName": "台電大樓",
+        "stationSid": "040"
+    },
+    "G09": {
+        "stationID": "G09",
+        "stationName": "古亭",
+        "stationSid": "041"
+    },
+    "G10": {
+        "stationID": "G10",
+        "stationName": "中正紀念堂",
+        "stationSid": "042"
+    },
+    "G11": {
+        "stationID": "G11",
+        "stationName": "小南門",
+        "stationSid": "043"
+    },
+    "G12": {
+        "stationID": "G12",
+        "stationName": "西門",
+        "stationSid": "086"
+    },
+    "G13": {
+        "stationID": "G13",
+        "stationName": "北門",
+        "stationSid": "105"
+    },
+    "G14": {
+        "stationID": "G14",
+        "stationName": "中山",
+        "stationSid": "053"
+    },
+    "G15": {
+        "stationID": "G15",
+        "stationName": "松江南京",
+        "stationSid": "132"
+    },
+    "G16": {
+        "stationID": "G16",
+        "stationName": "南京復興",
+        "stationSid": "009"
+    },
+    "G17": {
+        "stationID": "G17",
+        "stationName": "台北小巨蛋",
+        "stationSid": "109"
+    },
+    "G18": {
+        "stationID": "G18",
+        "stationName": "南京三民",
+        "stationSid": "110"
+    },
+    "G19": {
+        "stationID": "G19",
+        "stationName": "松山",
+        "stationSid": "111"
+    },
+    "G03A": {
+        "stationID": "G03A",
+        "stationName": "小碧潭",
+        "stationSid": "032"
+    },
+    "O01": {
+        "stationID": "O01",
+        "stationName": "南勢角",
+        "stationSid": "048"
+    },
+    "O02": {
+        "stationID": "O02",
+        "stationName": "景安",
+        "stationSid": "047"
+    },
+    "O03": {
+        "stationID": "O03",
+        "stationName": "永安市場",
+        "stationSid": "046"
+    },
+    "O04": {
+        "stationID": "O04",
+        "stationName": "頂溪",
+        "stationSid": "045"
+    },
+    "O05": {
+        "stationID": "O05",
+        "stationName": "古亭",
+        "stationSid": "041"
+    },
+    "O06": {
+        "stationID": "O06",
+        "stationName": "東門",
+        "stationSid": "134"
+    },
+    "O07": {
+        "stationID": "O07",
+        "stationName": "忠孝新生",
+        "stationSid": "089"
+    },
+    "O08": {
+        "stationID": "O08",
+        "stationName": "松江南京",
+        "stationSid": "132"
+    },
+    "O09": {
+        "stationID": "O09",
+        "stationName": "行天宮",
+        "stationSid": "131"
+    },
+    "O10": {
+        "stationID": "O10",
+        "stationName": "中山國小",
+        "stationSid": "130"
+    },
+    "O11": {
+        "stationID": "O11",
+        "stationName": "民權西路",
+        "stationSid": "055"
+    },
+    "O12": {
+        "stationID": "O12",
+        "stationName": "大橋頭",
+        "stationSid": "128"
+    },
+    "O13": {
+        "stationID": "O13",
+        "stationName": "台北橋",
+        "stationSid": "127"
+    },
+    "O14": {
+        "stationID": "O14",
+        "stationName": "菜寮",
+        "stationSid": "126"
+    },
+    "O15": {
+        "stationID": "O15",
+        "stationName": "三重",
+        "stationSid": "125"
+    },
+    "O16": {
+        "stationID": "O16",
+        "stationName": "先嗇宮",
+        "stationSid": "124"
+    },
+    "O17": {
+        "stationID": "O17",
+        "stationName": "頭前庄",
+        "stationSid": "123"
+    },
+    "O18": {
+        "stationID": "O18",
+        "stationName": "新莊",
+        "stationSid": "122"
+    },
+    "O19": {
+        "stationID": "O19",
+        "stationName": "輔大",
+        "stationSid": "121"
+    },
+    "O20": {
+        "stationID": "O20",
+        "stationName": "丹鳳",
+        "stationSid": "180"
+    },
+    "O21": {
+        "stationID": "O21",
+        "stationName": "迴龍",
+        "stationSid": "179"
+    },
+    "O50": {
+        "stationID": "O50",
+        "stationName": "三重國小",
+        "stationSid": "178"
+    },
+    "O51": {
+        "stationID": "O51",
+        "stationName": "三和國中",
+        "stationSid": "177"
+    },
+    "O52": {
+        "stationID": "O52",
+        "stationName": "徐匯中學",
+        "stationSid": "176"
+    },
+    "O53": {
+        "stationID": "O53",
+        "stationName": "三民高中",
+        "stationSid": "175"
+    },
+    "O54": {
+        "stationID": "O54",
+        "stationName": "蘆洲",
+        "stationSid": "174"
+    },
+    "R02": {
+        "stationID": "R02",
+        "stationName": "象山",
+        "stationSid": "099"
+    },
+    "R03": {
+        "stationID": "R03",
+        "stationName": "台北101/世貿",
+        "stationSid": "100"
+    },
+    "R04": {
+        "stationID": "R04",
+        "stationName": "信義安和",
+        "stationSid": "101"
+    },
+    "R05": {
+        "stationID": "R05",
+        "stationName": "大安",
+        "stationSid": "011"
+    },
+    "R06": {
+        "stationID": "R06",
+        "stationName": "大安森林公園",
+        "stationSid": "103"
+    },
+    "R07": {
+        "stationID": "R07",
+        "stationName": "東門",
+        "stationSid": "134"
+    },
+    "R08": {
+        "stationID": "R08",
+        "stationName": "中正紀念堂",
+        "stationSid": "042"
+    },
+    "R09": {
+        "stationID": "R09",
+        "stationName": "台大醫院",
+        "stationSid": "050"
+    },
+    "R10": {
+        "stationID": "R10",
+        "stationName": "台北車站",
+        "stationSid": "051"
+    },
+    "R11": {
+        "stationID": "R11",
+        "stationName": "中山",
+        "stationSid": "053"
+    },
+    "R12": {
+        "stationID": "R12",
+        "stationName": "雙連",
+        "stationSid": "054"
+    },
+    "R13": {
+        "stationID": "R13",
+        "stationName": "民權西路",
+        "stationSid": "055"
+    },
+    "R14": {
+        "stationID": "R14",
+        "stationName": "圓山",
+        "stationSid": "056"
+    },
+    "R15": {
+        "stationID": "R15",
+        "stationName": "劍潭",
+        "stationSid": "057"
+    },
+    "R16": {
+        "stationID": "R16",
+        "stationName": "士林",
+        "stationSid": "058"
+    },
+    "R17": {
+        "stationID": "R17",
+        "stationName": "芝山",
+        "stationSid": "059"
+    },
+    "R18": {
+        "stationID": "R18",
+        "stationName": "明德",
+        "stationSid": "060"
+    },
+    "R19": {
+        "stationID": "R19",
+        "stationName": "石牌",
+        "stationSid": "061"
+    },
+    "R20": {
+        "stationID": "R20",
+        "stationName": "唭哩岸",
+        "stationSid": "062"
+    },
+    "R21": {
+        "stationID": "R21",
+        "stationName": "奇岩",
+        "stationSid": "063"
+    },
+    "R22": {
+        "stationID": "R22",
+        "stationName": "北投",
+        "stationSid": "064"
+    },
+    "R22A": {
+        "stationID": "R22A",
+        "stationName": "新北投",
+        "stationSid": "065"
+    },
+    "R23": {
+        "stationID": "R23",
+        "stationName": "復興崗",
+        "stationSid": "066"
+    },
+    "R24": {
+        "stationID": "R24",
+        "stationName": "忠義",
+        "stationSid": "067"
+    },
+    "R25": {
+        "stationID": "R25",
+        "stationName": "關渡",
+        "stationSid": "068"
+    },
+    "R26": {
+        "stationID": "R26",
+        "stationName": "竹圍",
+        "stationSid": "069"
+    },
+    "R27": {
+        "stationID": "R27",
+        "stationName": "紅樹林",
+        "stationSid": "070"
+    },
+    "R28": {
+        "stationID": "R28",
+        "stationName": "淡水",
+        "stationSid": "071"
+    },
+    "Y07": {
+        "stationID": "Y07",
+        "stationName": "大坪林",
+        "stationSid": "200"
+    },
+    "Y08": {
+        "stationID": "Y08",
+        "stationName": "十四張",
+        "stationSid": "201"
+    },
+    "Y09": {
+        "stationID": "Y09",
+        "stationName": "秀朗橋",
+        "stationSid": "202"
+    },
+    "Y10": {
+        "stationID": "Y10",
+        "stationName": "景平",
+        "stationSid": "203"
+    },
+    "Y11": {
+        "stationID": "Y11",
+        "stationName": "景安",
+        "stationSid": "204"
+    },
+    "Y12": {
+        "stationID": "Y12",
+        "stationName": "中和",
+        "stationSid": "205"
+    },
+    "Y13": {
+        "stationID": "Y13",
+        "stationName": "橋和",
+        "stationSid": "206"
+    },
+    "Y14": {
+        "stationID": "Y14",
+        "stationName": "中原",
+        "stationSid": "207"
+    },
+    "Y15": {
+        "stationID": "Y15",
+        "stationName": "板新",
+        "stationSid": "208"
+    },
+    "Y16": {
+        "stationID": "Y16",
+        "stationName": "板橋",
+        "stationSid": "209"
+    },
+    "Y17": {
+        "stationID": "Y17",
+        "stationName": "新埔民生",
+        "stationSid": "210"
+    },
+    "Y18": {
+        "stationID": "Y18",
+        "stationName": "頭前庄",
+        "stationSid": "211"
+    },
+    "Y19": {
+        "stationID": "Y19",
+        "stationName": "幸福",
+        "stationSid": "212"
+    },
+    "Y20": {
+        "stationID": "Y20",
+        "stationName": "新北產業園區",
+        "stationSid": "213"
+    }
+}
