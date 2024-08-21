@@ -154,8 +154,6 @@ class DataPipeline:
         while True:
             try:
                 metro_data = await self.process_metro_data()
-                with open("metro.json","w",encoding="utf-8")as f:
-                    json.dump(metro_data,f,ensure_ascii=False,indent=4)
                 for i in range(0, len(metro_data), BATCH_SIZE):
                     batch = metro_data[i:i+BATCH_SIZE]
                     await self.send_batch_to_kafka("metro_data", batch)
