@@ -1,12 +1,12 @@
+import {position, stationIds} from "./globalVar.js";
 document.addEventListener('DOMContentLoaded', (event) => {
- 
+    
     const parkingButton = document.getElementById('ParkingButton');
     const modal = document.getElementById('parkingModal');
     const closeButton = document.querySelector('.close-button');
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
-
-        
+    
     const buttons = document.querySelectorAll('.map-overlay button');
     
     // Set the first button as active by default
@@ -47,47 +47,36 @@ document.addEventListener('DOMContentLoaded', (event) => {
 });
 
 
-function initMap() {
+async function initMap() {
+    let res = await fetch(`/api/mrt/parking/${position}`);
+    let result = await res.json();
+    let parking_data = Object.values(result)[0];
+    document.getElementById('currentPosition').textContent = `目前位置：${position}`;
     let map = new google.maps.Map(document.getElementById('map'), {
         zoom: 18,
-        center: { lat: 25.02373600, lng: 121.46836300 },
+        center: { lat: parking_data["station_latitude"], lng: parking_data["station_longitude"] },
     });
 
-    const markers = [
-        {
-            position: { lat: 25.02587920, lng: 121.47090680 },
-            title: "文化路二段124巷停車場",
-            address: "220台灣新北市板橋區文化路二段124巷"
-        },
-        { lat: 25.02552670, lng: 121.46660100 }
-    ];
-
+    let parking_lots = parking_data["parking_lots"];
     const bounds = new google.maps.LatLngBounds();
 
-    markers.forEach(markerInfo => {
-        const position = markerInfo.position || markerInfo;
+    parking_lots.forEach(lot => {
+        const position = { lat: lot["parking_lot_latitude"], lng: lot["parking_lot_longitude"] };
         const marker = new google.maps.Marker({
             position: position,
             map: map,
-            title: markerInfo.title || ''
+            title: lot["parking_lot_name"]
         });
 
         bounds.extend(position);
 
-        if (markerInfo.title) {
-            const infoWindow = new google.maps.InfoWindow({
-                content: `
-                    <div class="map_info">
-                        <h3>${markerInfo.title}</h3>
-                        <button onclick="navigate('${markerInfo.address}')">導航</button>
-                    </div>
-                `
-            });
+        const infoWindow = new google.maps.InfoWindow({
+            content: createInfoWindowContent(lot["parking_lot_name"], position.lat, position.lng)
+        });
 
-            marker.addListener('click', () => {
-                infoWindow.open(map, marker);
-            });
-        }
+        marker.addListener('click', () => {
+            infoWindow.open(map, marker);
+        });
     });
 
     map.fitBounds(bounds);
@@ -99,7 +88,20 @@ function initMap() {
     });
 }
 
-function navigate(address) {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+function createInfoWindowContent(title, lat, lng) {
+    const div = document.createElement('div');
+    div.className = 'map_info';
+    div.innerHTML = `<h3>${title}</h3>`;
+    
+    const button = document.createElement('button');
+    button.textContent = '導航';
+    button.addEventListener('click', () => navigate(lat, lng, title));
+    
+    div.appendChild(button);
+    return div;
+}
+
+function navigate(latitude, longitude, placeName) {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&destination_place_id=${encodeURIComponent(placeName)}`;
     window.open(url, '_blank');
 }

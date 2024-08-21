@@ -14,7 +14,6 @@ function watchPosition() {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude
         };
-        // console.log(`位置更新：緯度 ${currentPosition.latitude}，經度 ${currentPosition.longitude}`);
         resolve(currentPosition);
       },
       (error) => {

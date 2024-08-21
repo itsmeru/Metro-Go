@@ -11,11 +11,11 @@ async def parking(station: str, db: AsyncSession = Depends(get_db)):
     try:
         query = select(Station, ParkingLot).join(ParkingLot, Station.id == ParkingLot.station_id).where(Station.name == station)
         result = await db.execute(query)
-        parking_data = result.scalars().all()
+        parking_data = result.fetchall()
         
         if not parking_data:
             return {"message": "No parking data found for this station"}
-        
+      
         station_info = {
             "station_latitude": parking_data[0].Station.latitude,
             "station_longitude": parking_data[0].Station.longitude,

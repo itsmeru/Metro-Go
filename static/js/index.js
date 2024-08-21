@@ -10,6 +10,7 @@ import { getCurrentPosition} from "./gps.js";
 import {  haversineDistance } from "./distance.js"
 import { getParking }from "./getParking.js"
 
+
 document.addEventListener('DOMContentLoaded', async () => {
     let position = "民權西路";
     let stationIds = "O11";
@@ -45,6 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         stationIds = stations[i]["StationID"]
                     }
                 }
+            
                 resolve({ position: position, stationIds: stationIds });
                
             } else {
@@ -67,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function assignStationsToLine(lineName, stations) {
+    
         lineCoordinates[lineName].forEach((coords, idx) => {
             if (stations[idx]) {
                 StationToLine(stations[idx], lines[lineName], coords[0], coords[1]);
@@ -319,6 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let lastSelectedStation = position;
 
     function updatePositionDisplay(encodedName, stationId) {
+        
         if (lastSelectedStation) {
             d3.selectAll(`.info-${lastSelectedStation}`)
                 .style('opacity', 1);
@@ -335,6 +339,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         position = encodedName;
         stationIds = stationId;
+        updateVar("position",position);
+        updateVar("stationIds",stationIds);
     
         // 調用相關函數
         onStationClick(encodedName);
@@ -407,11 +413,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             nameLines.forEach((line, index) => {
                 stationGroup.append('text')
                     .attr('x', x)
-                    .attr('y', y + 25 + (index * 14))
+                    .attr('y', y + 30 + (index * 14))
                     .attr('text-anchor', 'middle')
                     .attr('class', 'label')
                     .text(line)
-                    .style('font-size', '12px')
+                    .style('font-size', '15px')
                     .style('fill', 'black')
                     .style('pointer-events', 'none');
             });
