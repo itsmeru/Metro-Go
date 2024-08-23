@@ -61,6 +61,20 @@ nav {
     transform: translateY(-5px);
     box-shadow: 0 15px 20px -3px rgba(0, 0, 0, 0.15), 0 6px 8px -2px rgba(0, 0, 0, 0.1);
 }
+.time-info {
+    position: absolute;
+    top: 7.8%;
+    left: 48%;
+    transform: translateX(85%);
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 5px;
+    display: none;
+    z-index: 20;
+    width: 250px;
+    color: #666666;
+    font-weight: bold;
+}
 
 #metro-map {
     width: 100%;
@@ -71,7 +85,7 @@ nav {
     background-color: rgba(255, 255, 255, 0.95);
     border-radius: 10px;
     padding: 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    /* box-shadow: 0 4px 6px rgba(0,0,0,0.1); */
     display: flex;
     gap: 20px;
     margin-bottom: 25px;
@@ -128,6 +142,7 @@ nav {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     transition: all 0.3s ease;
+    margin-top: 10px;
 }
 
 .info-container:hover {
@@ -316,6 +331,7 @@ nav {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 20px 0 0 0 ;
 }
 
 #ParkingButton:hover {
@@ -344,19 +360,96 @@ nav {
     display: flex;
     align-items: center;
     justify-content: center;
-}
+    margin: 20px 0 0 0 ;
 
-#tripPlanButton:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 8px rgba(234, 88, 12, 0.6);
 }
 
 #tripPlanButton::before {
-    content: "\f0f2";
+    content: "\f073";
     font-family: "Font Awesome 5 Free";
     font-weight: 900;
     margin-right: 10px;
     font-size: 20px;
+}
+#tripInfo {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, 0%);
+    background-color: #ffffff;
+    border: none;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    width: 350px;
+    max-width: calc(100% - 40px);
+    font-family: 'Arial', sans-serif;
+}
+
+.trip-info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #333333;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#closeTripInfo {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666666;
+    transition: color 0.3s ease;
+}
+
+#closeTripInfo:hover {
+    color: #ff4444;
+}
+
+#startPointDisplay, #endPointDisplay {
+    margin-bottom: 15px;
+    color: #555555;
+    font-size: 16px;
+}
+
+#goButton, #resetButton {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+#goButton {
+    background-color: #4CAF50;
+    color: white;
+    margin-right: 10px;
+}
+
+#goButton:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+}
+
+#goButton:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#resetButton {
+    background-color: #f44336;
+    color: white;
+}
+
+#resetButton:hover {
+    background-color: #d32f2f;
+    transform: translateY(-2px);
 }
 .modal {
     display: none;

@@ -49,7 +49,8 @@ class MRTStation(Base):
     __tablename__ = 'mrt_stations'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    station_id = Column(String(10), nullable=False)
+    station_id = Column(String(10), nullable=False,index=True)
+    station_sid = Column(String(10), nullable=False)
     station_name = Column(String(100), nullable=False,index=True)
     stations_for_bus = Column(String(20),nullable=False)
     station_name_en = Column(String(100), nullable=False)

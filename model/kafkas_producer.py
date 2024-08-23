@@ -15,9 +15,9 @@ BATCH_SIZE = 1000
 
 auth_url = "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token"
 tpe_url = "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json"
-# ntp_url = "https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/csv/file"
-ntp_url = "https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/csv?size=3000"
-
+ntp_url = "https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/csv/file"
+# ntp_url = "https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/csv?size=3000"
+sid_url = "https://ws.metro.taipei/trtcBeaconBE/RouteControl.asmx"
 metro_url = "https://api.metro.taipei/metroapi/TrackInfo.asmx"
 bus_urls = ["https://tdx.transportdata.tw/api/basic/v2/Bus/EstimatedTimeOfArrival/City/Taipei?%24select=RouteName%2CStopName&%24filter=%28contains%28StopName%2FZh_tw%2C%20%27%E6%8D%B7%E9%81%8B%27%29%20or%20StopName%2FZh_tw%20eq%20%27%E6%9D%BF%E6%A9%8B%E8%BB%8A%E7%AB%99%28%E6%96%87%E5%8C%96%E8%B7%AF%29%27%29%20and%20EstimateTime%20lt%201200%20and%20StopStatus%20eq%200&%24format=JSON",
             "https://tdx.transportdata.tw/api/basic/v2/Bus/EstimatedTimeOfArrival/City/NewTaipei?%24select=RouteName%2CStopName&%24filter=%28contains%28StopName%2FZh_tw%2C%20%27%E6%8D%B7%E9%81%8B%27%29%20or%20StopName%2FZh_tw%20eq%20%27%E6%9D%BF%E6%A9%8B%E8%BB%8A%E7%AB%99%28%E6%96%87%E5%8C%96%E8%B7%AF%29%27%29%20and%20EstimateTime%20lt%201200%20and%20StopStatus%20eq%200&%24format=JSON"]
@@ -37,6 +37,7 @@ xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
 </getTrackInfo>
 </soap:Body>
 </soap:Envelope>"""
+
 
 class DataPipeline:
     def __init__(self, app_id, app_key):

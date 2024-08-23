@@ -1,19 +1,25 @@
-import {position, stationIds} from "./globalVar.js";
+import {position, stationIds, userLat, userLon} from "./globalVar.js";
 document.addEventListener('DOMContentLoaded', (event) => {
-    
+
     const parkingButton = document.getElementById('ParkingButton');
     const modal = document.getElementById('parkingModal');
     const closeButton = document.querySelector('.close-button');
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
-    
     const buttons = document.querySelectorAll('.map-overlay button');
-    
+    const timeInfo = document.querySelector('.time-info');
+
+
     // Set the first button as active by default
     buttons[0].classList.add('active');
 
     buttons.forEach(button => {
         button.addEventListener('click', function() {
+            if (button.value === "time") {
+                timeInfo.style.display = 'block';
+            } else {
+                timeInfo.style.display = 'none';
+            }
             buttons.forEach(btn => btn.classList.remove('active'));
             this.classList.add('active');
         });

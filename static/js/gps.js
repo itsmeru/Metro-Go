@@ -8,7 +8,7 @@ function watchPosition() {
       return;
     }
 
-    globalWatchId = navigator.geolocation.watchPosition(
+    globalWatchId = navigator.geolocation.getCurrentPosition(
       (position) => {
         currentPosition = {
           latitude: position.coords.latitude,

@@ -9,12 +9,20 @@ import { createCountdownCircle, updateCountdownCircle } from "./circle.js"
 import { getCurrentPosition} from "./gps.js";
 import {  haversineDistance } from "./distance.js"
 import { getParking }from "./getParking.js"
+import { addPin} from "./tripPlanner.js";
 
 
 document.addEventListener('DOMContentLoaded', async () => {
     let position = "民權西路";
     let stationIds = "O11";
-    
+    let tripPlannerActive = false;
+    let startPoint = null;
+    let endPoint = null;
+    let startPin = null;
+    let endPin = null;
+    let startId = null;
+
+   
     const result = await getStation();
     console.log(result);
     
@@ -23,7 +31,110 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 初始化地圖
     initializeMap();
+    initializeTripPlanner();
 
+    function initializeTripPlanner() {
+        const tripPlannerButton = document.querySelector('#tripPlanButton');
+
+        const tripInfoDiv = document.createElement('div');
+        tripInfoDiv.id = 'tripInfo';
+        tripInfoDiv.style.display = 'none';
+        tripInfoDiv.innerHTML = `
+            <div class="trip-info-header">
+                <h3>旅程規劃</h3>
+                <button id="closeTripInfo">X</button>
+            </div>
+            <div id="startPointDisplay">起站: 未選擇</div>
+            <div id="endPointDisplay">訖站: 未選擇</div>
+            <button id="goButton" disabled>Go</button>
+            <button id="resetButton">重置</button>
+        `;
+        document.body.appendChild(tripInfoDiv);
+
+        tripPlannerButton.addEventListener('click', toggleTripPlanner);
+        document.getElementById('closeTripInfo').addEventListener('click', closeTripPlanner);
+        document.getElementById('goButton').addEventListener('click', calculateTrip);
+        document.getElementById('resetButton').addEventListener('click', resetSelection);
+    }
+    function toggleTripPlanner() {
+        tripPlannerActive = !tripPlannerActive;
+        const tripInfoDiv = document.getElementById('tripInfo');
+        if (tripPlannerActive) {
+            tripInfoDiv.style.display = 'block';
+            clearStationBoxes();
+        } else {
+            closeTripPlanner();
+        }
+    }
+    function closeTripPlanner() {
+        tripPlannerActive = false;
+        const tripInfoDiv = document.getElementById('tripInfo');
+        tripInfoDiv.style.display = 'none';
+        resetSelection();
+        restoreOriginalDisplay();
+    }
+
+    function clearStationBoxes() {
+        d3.selectAll('.station-box').attr('fill', 'white');
+        d3.selectAll('#station-text').text('');
+        resetSelection();
+        clearPins();
+    }
+
+    function resetSelection() {
+        startPoint = null;
+        endPoint = null;
+        document.getElementById('startPointDisplay').textContent = '起點: 未選擇';
+        document.getElementById('endPointDisplay').textContent = '終點: 未選擇';
+        document.getElementById('goButton').disabled = true;
+        d3.selectAll('.station-box').attr('fill', 'white');
+        clearPins();
+    }
+
+    function restoreOriginalDisplay() {
+        if (currentDisplay === "ticket") {
+            updateTickets(position, currentTicket);
+        } else {
+            updateTimes(position, stationIds);
+        }
+        updatePositionDisplay(position, stationIds);
+    }
+
+    function clearPins() {
+        d3.selectAll(".pin-marker").remove();
+        startPin = null;
+        endPin = null;
+        
+    }
+
+    async function calculateTrip(){
+        let startPointDisplay = document.querySelector("#startPointDisplay").textContent;
+        let endPointDisplay = document.querySelector("#endPointDisplay").textContent;
+        let startStationId = startPointDisplay.split("(")[1].replace(")", "").trim();
+        let endStationId = endPointDisplay.split("(")[1].replace(")", "").trim();
+        const url = `/api/mrt/planning?start_station_id=${encodeURIComponent(startStationId)}&end_station_id=${encodeURIComponent(endStationId)}`;
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+    
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+    
+            const data = await response.json();
+            console.log("Planning result:", data);
+            // 在這裡處理返回的數據
+        } catch (error) {
+            console.error("There was a problem with the fetch operation:", error);
+        }
+        console.log("2",startStationId,endStationId);
+        
+
+    }
     
 
     async function updatePosition(stations) {        
@@ -36,6 +147,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (user_position) {
                 const userLat = user_position.latitude;
                 const userLon = user_position.longitude;
+                updateVar("gpsLat",userLat);
+                updateVar("gpsLon",userLon);
                 for (let i = 0; i < stations.length; i++) {
                     const targetLat = stations[i]["lat"];
                     const targetLon = stations[i]["lon"];
@@ -89,6 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function updateStationDisplay(info, stationName) {
+  
         const dynamicInfo = document.querySelector(".dynamic-info");
         if (!dynamicInfo) {
             console.error("No element with class 'dynamic-info' found");
@@ -322,6 +436,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let lastSelectedStation = position;
 
     function updatePositionDisplay(encodedName, stationId) {
+        if (tripPlannerActive) {
+            return;
+        }
         
         if (lastSelectedStation) {
             d3.selectAll(`.info-${lastSelectedStation}`)
@@ -342,12 +459,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateVar("position",position);
         updateVar("stationIds",stationIds);
     
-        // 調用相關函數
+        // 更新狀態
         onStationClick(encodedName);
         onBikeClick(encodedName);
         onBusClick(encodedName);
     
-        // 根據當前顯示模式更新信息
         if (currentDisplay === "ticket") {
             updateTickets(encodedName, currentTicket);
         } else {
@@ -355,7 +471,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-
+    // 字太多換行
     function splitIntoLines(text, charsPerLine) {
         const lines = [];
         for (let i = 0; i < text.length; i += charsPerLine) {
@@ -417,13 +533,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .attr('text-anchor', 'middle')
                     .attr('class', 'label')
                     .text(line)
-                    .style('font-size', '15px')
+                    .style('font-size', '14px')
                     .style('fill', 'black')
                     .style('pointer-events', 'none');
             });
 
             stationGroup.on('click', function() {
-                updatePositionDisplay(encodedName, stationId);
+                const stationBox = d3.select(this).select(".station-box");
+                const stationName = getFullStationName(this);
+                const x = parseFloat(stationBox.attr("x")) + 12.5; // 站點中心 X 座標
+                const y = parseFloat(stationBox.attr("y")) + 12.5; // 站點中心 Y 座標
+        
+                if (tripPlannerActive) {
+                    if (!startPoint) {
+                        startPoint = stationName;
+                        startId = stationId;
+                        document.getElementById('startPointDisplay').textContent = `起點: ${stationName} (${stationId})`;
+                        addPin(this, x, y, "#4CAF50", "S");
+                        startPin = this;
+                    } else if (!endPoint && stationName !== startPoint || stationId !== startId ) {
+                        endPoint = stationName;
+                        document.getElementById('endPointDisplay').textContent = `終點: ${stationName} (${stationId})`;
+                        addPin(this, x, y, "#FF5722", "E");
+                        endPin = this;
+                        document.getElementById('goButton').disabled = false;
+                    }
+                } else {
+                    updatePositionDisplay(encodedName, stationId);
+                }
             })
             .on("mouseover", function() {
                 d3.select(this).select(".station-box").attr("fill", "#D2B48C");
@@ -438,6 +575,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
     }
+        function getFullStationName(stationGroup) {
+            const labels = d3.select(stationGroup).selectAll('.label');
+            return labels.nodes().map(node => node.textContent).join('');
+        }
+
+
 
     const buttonContainer = document.querySelector(".map-overlay");
 

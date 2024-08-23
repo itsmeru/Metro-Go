@@ -31,7 +31,7 @@ function connectWebSocket() {
 }
 
 function subscribe(type, stationName, callback) {
-    console.log(`GET ${type}:`, stationName);
+    // console.log(`GET ${type}:`, stationName);
     if (!subscribers.has(type)) {
         subscribers.set(type, new Map());
     }
@@ -65,8 +65,9 @@ function updateDynamicInfo(type, data) {
         cache.get(type).set(stationName, info);        
     });
     console.log(type,liveData);
-
     return liveData;
+   
+    
 }
 
 connectWebSocket();
