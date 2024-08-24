@@ -2,7 +2,7 @@ from fastapi import *
 from fastapi.staticfiles import StaticFiles
 from controller import getMrtName,getTicket,getTime,getParking,getPlan
 from view import staticPage
-from db.db_set import get_redis_connection,redis_pool
+from db.db_set import engine, get_redis_connection,redis_pool
 import logging
 
 # 設置日誌
@@ -25,6 +25,7 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    await engine.dispose()
     logger.info("Application is shutting down. Closing Redis connection pool.")
     if redis_pool:
         try:
@@ -35,16 +36,7 @@ async def shutdown_event():
     else:
         logger.warning("Redis connection pool was not initialized.")
         
-# @app.middleware("http")
-# async def redis_connection(request: Request, call_next):
-#     request.state.redis = get_redis_connection()
-#     response = await call_next(request)
-#     return response
 
-# @app.on_event("shutdown")
-# async def shutdown_event():
-#     # 在應用關閉時關閉 Redis 連接池
-#     await redis_pool.disconnect()
 
 app.include_router(getMrtName.router)
 app.include_router(staticPage.router)

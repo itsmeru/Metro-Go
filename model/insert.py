@@ -133,8 +133,7 @@ async def main():
             await insert_ticket_data("datas.json", db)
         except Exception as e:
             print(f"An error occurred: {e}")
-        finally:
-            await engine.dispose()
+    
 
 if __name__ == "__main__":
     asyncio.run(main())

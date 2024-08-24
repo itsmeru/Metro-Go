@@ -47,5 +47,4 @@ async def get_bike(bike_data):
         except Exception as e:
             logger.error(f"An error occurred: {e}")
             raise
-        finally:
-            await engine.dispose()
+      

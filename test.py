@@ -1,242 +1,136 @@
+from collections import defaultdict
+from model.station_time import get_station_time
+import heapq
 import json
-import sys
-import os
-from typing import List, Dict, Tuple, Optional
-from datetime import datetime, timedelta
-import logging
-
-# 假設 db_set.py 在父目錄中
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from db.db_set import get_redis_connection
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-class Station:
-    def __init__(self, id: str, name: str):
-        self.id = id
-        self.name = name
-        self.neighbors: Dict[str, int] = {}  # {鄰接站點id: 所需時間}
-        self.lines: List[str] = []
-        self.next_trains: Dict[str, str] = {}  # {方向: 下一班車時間}
-
 class MetroSystem:
-    def __init__(self):
-        self.stations: Dict[str, Station] = {}
-        self.lines: Dict[str, List[str]] = {}
-        self.station_total: List[List[str]] = []
+    def __init__(self, lines, station_names, transfer_stations):
+        self.lines = lines
+        self.station_names = station_names
+        self.transfer_stations = transfer_stations
+        self.graph = self._build_graph()
 
-    def add_station(self, id: str, name: str):
-        self.stations[id] = Station(id, name)
-
-    def add_connection(self, station1: str, station2: str, time: int):
-        self.stations[station1].neighbors[station2] = time
-        self.stations[station2].neighbors[station1] = time
-        logger.info(f"Added connection between {station1} and {station2} with time {time}")
-
-    def add_line(self, line: str, stations: List[str]):
-        self.lines[line] = stations
-        self.station_total.append(stations)
-        for station in stations:
-            self.stations[station].lines.append(line)
+    def _build_graph(self):
+        graph = defaultdict(list)
         
-        with open("each_station_time.json", "r", encoding="utf-8") as f:
-            time_file = json.load(f)
+        for line, stations in self.lines:
+            for i in range(len(stations) - 1):
+                graph[stations[i]].append((stations[i+1], line, 1))
+                graph[stations[i+1]].append((stations[i], line, 1))
         
-        for i in range(len(stations) - 1):
-            current_station = stations[i]
-            next_station = stations[i + 1]
-            for time in time_file:
-                if (time["startStationId"] == current_station and time["endStationId"] == next_station) or \
-                   (time["startStationId"] == next_station and time["endStationId"] == current_station):
-                    self.add_connection(current_station, next_station, time["arriveTime"])
-                    break
-            else:
-                logger.warning(f"未找到從 {current_station} 到 {next_station} 的連接時間")
+        for station, lines in self.transfer_stations.items():
+            codes = [code for code, name in self.station_names.items() if name == station]
+            for i in range(len(codes)):
+                for j in range(i+1, len(codes)):
+                    graph[codes[i]].append((codes[j], "轉乘", 5))
+                    graph[codes[j]].append((codes[i], "轉乘", 5))
         
-        logger.info(f"Added line {line} with {len(stations)} stations")
+        return graph
 
-    def update_next_train(self, station_id: str, direction_id: str, time: str):
-        if ':' in time or time in ['資料擷取中', '列車進站']:
-            self.stations[station_id].next_trains[direction_id] = time
-        else:
-            try:
-                self.stations[station_id].next_trains[direction_id] = int(time)
-            except ValueError:
-                logger.warning(f"無效的時間格式 '{time}' 用於站點 {station_id} 和方向 {direction_id}")
-
-    def get_wait_time(self, station: str, direction: str) -> int:
-        next_train = self.stations[station].next_trains.get(direction)
-        if next_train is not None:
-            return self._process_wait_time(station, direction, next_train)
-        logger.warning(f"站點 {station} 往 {direction} 方向沒有下一班車信息")
-        return 0
-
-    def _process_wait_time(self, station: str, direction: str, time_value: str) -> int:
-        if time_value in ['資料擷取中', '列車進站']:
-            logger.info(f"站點 {station} 往 {direction} 方向的下一班車信息為 '{time_value}'，嘗試獲取上一站信息")
-            prev_station = self.get_previous_station(station, direction)
-            if prev_station:
-                prev_time = self.stations[prev_station].next_trains.get(direction)
-                if prev_time:
-                    return self._process_wait_time(prev_station, direction, prev_time)
-            logger.warning(f"無法獲取站點 {station} 往 {direction} 方向的有效等待時間")
-            return 0
-
-        if ':' in time_value:
-            now = datetime.now()
-            train_time = datetime.strptime(time_value, "%H:%M").replace(year=now.year, month=now.month, day=now.day)
-            if train_time < now:
-                train_time += timedelta(days=1)
-            wait_time = (train_time - now).total_seconds() / 60
-            return int(wait_time)
-        else:
-            try:
-                return int(time_value)
-            except ValueError:
-                logger.warning(f"無效的時間格式 '{time_value}' 用於站點 {station} 和方向 {direction}")
-                return 0
-
-    def get_direction(self, start_station: str, end_station: str) -> Optional[str]:
-        for line, stations in self.lines.items():
-            if start_station in stations and end_station in stations:
-                start_index = stations.index(start_station)
-                end_index = stations.index(end_station)
-                if start_index < end_index:
-                    return stations[-1]  # 終點站
-                else:
-                    return stations[0]  # 起始站
-        return None
-
-    def get_previous_station(self, station: str, direction: str) -> Optional[str]:
-        for line in self.stations[station].lines:
-            line_stations = self.lines[line]
-            station_index = line_stations.index(station)
-            if direction == line_stations[-1]:
-                return line_stations[station_index - 1] if station_index > 0 else None
-            else:
-                return line_stations[station_index + 1] if station_index < len(line_stations) - 1 else None
-        return None
-
-    def find_route(self, route: List[str]):
-        total_time = 0
-        wait_time = 0
-        path = []
-        
-        for i in range(len(route) - 1):
-            current_station = route[i]
-            next_station = route[i + 1]
-            
-            if not self.are_stations_on_same_line(current_station, next_station):
-                transfer_path = self.find_transfer_station(current_station, next_station)
-                if transfer_path:
-                    logger.info(f"找到轉乘路線：{' -> '.join(transfer_path)}")
-                    for j in range(len(transfer_path) - 1):
-                        sub_path, sub_total_time, sub_wait_time = self.find_route([transfer_path[j], transfer_path[j+1]])
-                        path.extend(sub_path[:-1])
-                        total_time += sub_total_time
-                        wait_time += sub_wait_time
-                    current_station = transfer_path[-1]
-                else:
-                    raise ValueError(f"無法找到從 {current_station} 到 {next_station} 的路線")
-            
-            path.append(current_station)
-            direction = self.get_direction(current_station, next_station)
-            if direction is None:
-                raise ValueError(f"無法確定從 {current_station} 到 {next_station} 的方向")
-            
-            station_wait_time = self.get_wait_time(current_station, direction)
-            wait_time += station_wait_time
-
-            travel_time = self.stations[current_station].neighbors.get(next_station, 0)
-            if isinstance(travel_time, str):
-                try:
-                    travel_time = int(travel_time)
-                except ValueError:
-                    logger.warning(f"無效的旅行時間 '{travel_time}' 用於從 {current_station} 到 {next_station}")
-                    travel_time = 0
-
-            total_time += station_wait_time + travel_time
-            logger.info(f"從 {current_station} 到 {next_station}: 等待時間 {station_wait_time}分鐘, 旅行時間 {travel_time}分鐘")
-        
-        path.append(route[-1])
-        return path, total_time, wait_time
-
-    def are_stations_on_same_line(self, station1: str, station2: str) -> bool:
-        for line, stations in self.lines.items():
-            if station1 in stations and station2 in stations:
-                return True
-        return False
-
-    def find_transfer_station(self, station1: str, station2: str) -> List[str]:
+    def find_path(self, start, end):
+        queue = [(0, start, [])]
         visited = set()
-        queue = [(station1, [station1])]
-        
+
         while queue:
-            current_station, path = queue.pop(0)
-            if current_station in visited:
-                continue
-            visited.add(current_station)
+            (cost, station, path) = heapq.heappop(queue)
             
-            if current_station == station2 or any(line in self.stations[station2].lines for line in self.stations[current_station].lines):
-                return path
-            
-            for neighbor in self.stations[current_station].neighbors:
-                if neighbor not in visited:
-                    queue.append((neighbor, path + [neighbor]))
+            if station not in visited:
+                visited.add(station)
+                path = path + [station]
+
+                if station == end:
+                    return self._process_path(path)
+
+                for next_station, line, edge_cost in self.graph[station]:
+                    if next_station not in visited:
+                        heapq.heappush(queue, (cost + edge_cost, next_station, path))
         
-        logger.warning(f"無法找到從 {station1} 到 {station2} 的轉乘路線")
-        return []
+        return None
 
-def load_metro_data(metro: MetroSystem):
-    with open("line-name.json", "r", encoding="utf-8") as f:
-        stations_data = json.load(f)
-    with open("name_dict.json", "r", encoding="utf-8") as f:
-        name_dict = json.load(f)
-
-    for station_id, name in stations_data.items():
-        metro.add_station(station_id, name)
-
-    metro.add_line("BL", ["BL01", "BL02", "BL03", "BL04", "BL05", "BL06", "BL07", "BL08", "BL09", "BL10", "BL11", "BL12", "BL13", "BL14", "BL15", "BL16", "BL17", "BL18", "BL19", "BL20", "BL21", "BL22", "BL23"])
-    metro.add_line("BR", ["BR01", "BR02", "BR03", "BR04", "BR05", "BR06", "BR07", "BR08", "BR09", "BR10", "BR11", "BR12", "BR13", "BR14", "BR15", "BR16", "BR17", "BR18", "BR19", "BR20", "BR21", "BR22", "BR23", "BR24"])
-    metro.add_line("G", ["G01", "G02", "G03", "G03A", "G04", "G05", "G06", "G07", "G08", "G09", "G10", "G11", "G12", "G13", "G14", "G15", "G16", "G17", "G18", "G19"])
-    metro.add_line("O", ["O01", "O02", "O03", "O04", "O05", "O06", "O07", "O08", "O09", "O10", "O11", "O12", "O13", "O14", "O15", "O16", "O17", "O18", "O19", "O20", "O21", "O50", "O51", "O52", "O53", "O54"])
-    metro.add_line("R", ["R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10", "R11", "R12", "R13", "R14", "R15", "R16", "R17", "R18", "R19", "R20", "R21", "R22", "R22A", "R23", "R24", "R25", "R26", "R27", "R28"])
-    metro.add_line("Y", ["Y07", "Y08", "Y09", "Y10", "Y11", "Y12", "Y13", "Y14", "Y15", "Y16", "Y17", "Y18", "Y19", "Y20"])
-
-    redis = get_redis_connection()
-    metro_data = redis.get("station_data")
-    metro_data_str = metro_data.decode('utf-8')
-    metro_data_json = json.loads(metro_data_str)
-
-    inverted_station = {value: key for key, value in stations_data.items()}
-    name_dic = {value: key for key, value in name_dict.items()}
-
-    for station_name, station_data in metro_data_json.items():
-        for item in station_data:
-            destinationName = item["DestinationName"]
-            if station_name == "板橋" and destinationName in ["大坪林站", "新北產業園區站"]:
-                station_id = "Y16"
+    def _process_path(self, path):
+        result = []
+        current_line = None
+        
+        for i in range(len(path)):
+            station = path[i]
+            station_name = self.station_names[station]
+            
+            if i == 0:
+                result.append(f"從 {station_name} 站出發")
+            elif i == len(path) - 1:
+                result.append(f"到達 {station_name} 站")
             else:
-                station_id = inverted_station[station_name]
-            end_id = inverted_station[name_dic[destinationName]]
-            count_down = item["CountDown"]
-            metro.update_next_train(station_id, end_id, count_down)
+                next_station = path[i+1]
+                for next_station_info in self.graph[station]:
+                    if next_station_info[0] == next_station:
+                        line = next_station_info[1]
+                        if line != current_line:
+                            if line == "轉乘":
+                                result.append(f"在 {station_name} 站轉乘")
+                            else:
+                                result.append(f"在 {station_name} 站乘坐 {line} 線")
+                            current_line = line
+                        break
 
-def main():
-    metro = MetroSystem()
-    load_metro_data(metro)
+        return result
 
-    route = ["R14", "R13", "O09"]  # 圓山-民權西路-行天宮
+# 捷運路線數據
+lines = [
+    ("BL", ["BL01", "BL02", "BL03", "BL04", "BL05", "BL06", "BL07", "BL08", "BL09", "BL10", "BL11", "BL12", "BL13", "BL14", "BL15", "BL16", "BL17", "BL18", "BL19", "BL20", "BL21", "BL22", "BL23"]),
+    ("BR", ["BR01", "BR02", "BR03", "BR04", "BR05", "BR06", "BR07", "BR08", "BR09", "BR10", "BR11", "BR12", "BR13", "BR14", "BR15", "BR16", "BR17", "BR18", "BR19", "BR20", "BR21", "BR22", "BR23", "BR24"]),
+    ("G", ["G01", "G02", "G03", "G03A", "G04", "G05", "G06", "G07", "G08", "G09", "G10", "G11", "G12", "G13", "G14", "G15", "G16", "G17", "G18", "G19"]),
+    ("O", ["O01", "O02", "O03", "O04", "O05", "O06", "O07", "O08", "O09", "O10", "O11", "O12", "O13", "O14", "O15", "O16", "O17", "O18", "O19", "O20", "O21", "O50", "O51", "O52", "O53", "O54"]),
+    ("R", ["R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10", "R11", "R12", "R13", "R14", "R15", "R16", "R17", "R18", "R19", "R20", "R21", "R22", "R22A", "R23", "R24", "R25", "R26", "R27", "R28"]),
+    ("Y", ["Y07", "Y08", "Y09", "Y10", "Y11", "Y12", "Y13", "Y14", "Y15", "Y16", "Y17", "Y18", "Y19", "Y20"])
+]
 
-    try:
-        path, total_time, wait_time = metro.find_route(route)
-        print(f"路線：{' -> '.join([metro.stations[s].name for s in path])}")
-        print(f"總旅行時間：{total_time} 分鐘")
-        print(f"其中等待時間：{wait_time} 分鐘")
-        print(f"實際乘車時間：{total_time - wait_time} 分鐘")
-    except ValueError as e:
-        print(f"錯誤：{e}")
+# 站點名稱數據
+with open("line-name.json","r",encoding="utf-8")as f:
+    station_names = json.load(f)
+# station_names = {
+#     "BL01": "頂埔", "BL02": "永寧", "BL03": "土城", "BL04": "海山", "BL05": "亞東醫院", "BL06": "府中", "BL07": "板橋", "BL08": "新埔", "BL09": "江子翠", "BL10": "龍山寺", "BL11": "西門", "BL12": "台北車站", "BL13": "善導寺", "BL14": "忠孝新生", "BL15": "忠孝復興", "BL16": "忠孝敦化", "BL17": "國父紀念館", "BL18": "市政府", "BL19": "永春", "BL20": "後山埤", "BL21": "昆陽", "BL22": "南港", "BL23": "南港展覽館",
+#     "BR01": "動物園", "BR02": "木柵", "BR03": "萬芳社區", "BR04": "萬芳醫院", "BR05": "辛亥", "BR06": "麟光", "BR07": "六張犁", "BR08": "科技大樓", "BR09": "大安", "BR10": "忠孝復興", "BR11": "南京復興", "BR12": "中山國中", "BR13": "松山機場", "BR14": "大直", "BR15": "劍南路", "BR16": "西湖", "BR17": "港墘", "BR18": "文德", "BR19": "內湖", "BR20": "大湖公園", "BR21": "葫洲", "BR22": "東湖", "BR23": "南港軟體園區", "BR24": "南港展覽館",
+#     "G01": "新店", "G02": "新店區公所", "G03": "七張", "G04": "大坪林", "G05": "景美", "G06": "萬隆", "G07": "公館", "G08": "台電大樓", "G09": "古亭", "G10": "中正紀念堂", "G11": "小南門", "G12": "西門", "G13": "北門", "G14": "中山", "G15": "松江南京", "G16": "南京復興", "G17": "台北小巨蛋", "G18": "南京三民", "G19": "松山", "G03A": "小碧潭",
+#     "O01": "南勢角", "O02": "景安", "O03": "永安市場", "O04": "頂溪", "O05": "古亭", "O06": "東門", "O07": "忠孝新生", "O08": "松江南京", "O09": "行天宮", "O10": "中山國小", "O11": "民權西路", "O12": "大橋頭", "O13": "台北橋", "O14": "菜寮", "O15": "三重", "O16": "先嗇宮", "O17": "頭前庄", "O18": "新莊", "O19": "輔大", "O20": "丹鳳", "O21": "迴龍", "O50": "三重國小", "O51": "三和國中", "O52": "徐匯中學", "O53": "三民高中", "O54": "蘆洲",
+#     "R02": "象山", "R03": "台北101/世貿", "R04": "信義安和", "R05": "大安", "R06": "大安森林公園", "R07": "東門", "R08": "中正紀念堂", "R09": "台大醫院", "R10": "台北車站", "R11": "中山", "R12": "雙連", "R13": "民權西路", "R14": "圓山", "R15": "劍潭", "R16": "士林", "R17": "芝山", "R18": "明德", "R19": "石牌", "R20": "唭哩岸", "R21": "奇岩", "R22": "北投", "R22A": "新北投", "R23": "復興崗", "R24": "忠義", "R25": "關渡", "R26": "竹圍", "R27": "紅樹林", "R28": "淡水",
+#     "Y07": "大坪林", "Y08": "十四張", "Y09": "秀朗橋", "Y10": "景平", "Y11": "景安", "Y12": "中和", "Y13": "橋和", "Y14": "中原", "Y15": "板新", "Y16": "板橋", "Y17": "新埔民生", "Y18": "頭前庄", "Y19": "幸福", "Y20": "新北產業園區"
+# }
 
-if __name__ == "__main__":
-    main()
+
+# 轉乘站數據
+transfer_stations = {
+    "南港展覽館": ["BL", "BR"],
+    "大安": ["BR", "R"],
+    "忠孝復興": ["BL", "BR"],
+    "南京復興": ["BR", "G"],
+    "中山": ["G", "R"],
+    "松江南京": ["G", "O"],
+    "西門": ["BL", "G"],
+    "古亭": ["G", "O"],
+    "東門": ["O", "R"],
+    "忠孝新生": ["BL", "O"],
+    "民權西路": ["O", "R"],
+    "台北車站": ["BL", "R"],
+    "中正紀念堂": ["G", "R"],
+    "大坪林": ["G", "Y"],
+    "景安": ["O", "Y"],
+    "頭前庄": ["O", "Y"]
+}
+
+# 站點時間
+
+
+# 創建 MetroSystem 對象
+metro = MetroSystem(lines, station_names, transfer_stations)
+
+# 使用示例
+start = "BL07"  
+end = "O13"     
+
+path = metro.find_path(start, end)
+
+if path:
+    print(f"從 {station_names[start]} 到 {station_names[end]} 的路線:")
+    for step in path:
+        print(step)
+else:
+    print(f"無法找到從 {station_names[start]} 到 {station_names[end]} 的路線")

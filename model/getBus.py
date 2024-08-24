@@ -77,5 +77,4 @@ async def get_bus(bus_data):
         except Exception as e:
             logger.error(f"An error occurred: {e}")
             raise
-        finally:
-            await engine.dispose()
+       

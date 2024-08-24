@@ -51,5 +51,4 @@ async def get_metro(real_time_datas):
         except Exception as e:
             logger.error(f"An error occurred: {e}")
             raise
-        finally:
-            await engine.dispose()
+      
