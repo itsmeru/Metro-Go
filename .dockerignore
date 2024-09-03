@@ -20,12 +20,16 @@ tests/
 docs/
 
 # 項目特定文件（根據需要調整）
-once/
-commands/
+once
 kafka_consumer.py
 kafka_producer.py
 kafkaInfo.md
+supervisord.log
 docker-compose.yml
+Dockerfile
 data_json
 mysql_data
-
+bikeTest.py
+cafe
+getTime
+getTicketFile

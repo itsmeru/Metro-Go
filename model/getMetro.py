@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from db.models import MRTStation
 import logging
-from db.db_set import get_db, engine
+from db.db_set import async_session
 
 
 logging.basicConfig(level=logging.INFO)
@@ -42,13 +42,14 @@ async def metro_data(db: AsyncSession,real_time_datas):
         raise
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
+        print(e)
         raise
 
 async def get_metro(real_time_datas):
-    async for db in get_db():
+    async with async_session() as db:
         try:
             return await metro_data(db,real_time_datas)
         except Exception as e:
             logger.error(f"An error occurred: {e}")
             raise
-      
+        

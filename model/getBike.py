@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from db.models import YoubikeStation
 import logging
-from db.db_set import get_db, engine
+from db.db_set import async_session
 
 
 logging.basicConfig(level=logging.INFO)
@@ -41,7 +41,7 @@ async def bike_datas(db: AsyncSession,bike_data_rel):
         raise
 
 async def get_bike(bike_data):
-    async for db in get_db():
+    async with async_session() as db:
         try:
             return await bike_datas(db,bike_data)
         except Exception as e:

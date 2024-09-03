@@ -1,14 +1,10 @@
-import { getStation } from "./getStations.js";
-import { getTicket } from "./getTickets.js";
-import { getStationTimes } from "./getTime.js";
+import {getStation,getTicket,getStationTimes,haversineDistance } from "./getFunction.js";
 import { subscribeToStation, unsubscribeFromStation, subscribeToBike, unsubscribeFromBike,subscribeToBus,unsubscribeFromBus} from "./websockets.js";
 import { lines, lineCoordinates } from "./coord.js"
 import { currentDisplay, currentTicket, encodeName, decodeName, updateVar, svg } from "./globalVar.js"
 import { updateTickets, updateTimes } from "./updateStatus.js"
 import { createCountdownCircle, updateCountdownCircle } from "./circle.js"
 import { getCurrentPosition} from "./gps.js";
-import {  haversineDistance } from "./distance.js"
-import { getParking }from "./getParking.js"
 import { addPin} from "./tripPlanner.js";
 
 
@@ -24,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
    
     const result = await getStation();
-    console.log(result);
+    // console.log(result);
     
     const ticket = await getTicket(position);
     const times = await getStationTimes(position, stationIds);
@@ -53,8 +49,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         tripPlannerButton.addEventListener('click', toggleTripPlanner);
         document.getElementById('closeTripInfo').addEventListener('click', closeTripPlanner);
-        document.getElementById('goButton').addEventListener('click', calculateTrip);
+        document.getElementById('goButton').addEventListener('click', ()=>{calculateTrip();closeTripPlanner()});
         document.getElementById('resetButton').addEventListener('click', resetSelection);
+        // document.getElementById('refreshButton').addEventListener('click', () => {
+        //     document.getElementById('routeDisplay').style.display = 'none';
+        //     calculateTrip();
+        // });
+        // document.getElementById('closeTripInfo').addEventListener('click',()=>{
+        //     document.getElementById('refreshButton').style.display = 'none';
+
+        // })   
     }
     function toggleTripPlanner() {
         tripPlannerActive = !tripPlannerActive;
@@ -112,6 +116,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         let endPointDisplay = document.querySelector("#endPointDisplay").textContent;
         let startStationId = startPointDisplay.split("(")[1].replace(")", "").trim();
         let endStationId = endPointDisplay.split("(")[1].replace(")", "").trim();
+        let startStation = startPointDisplay.split(" ")[1];
+        let endStation= endPointDisplay.split(" ")[1];
         const url = `/api/mrt/planning?start_station_id=${encodeURIComponent(startStationId)}&end_station_id=${encodeURIComponent(endStationId)}`;
         try {
             const response = await fetch(url, {
@@ -127,15 +133,80 @@ document.addEventListener('DOMContentLoaded', async () => {
     
             const data = await response.json();
             console.log("Planning result:", data);
+            let selectedData;
+           
+            selectedData = data["result"][0];
+         
+            
+            displayRoutes(selectedData, startStation, endStation);
             // 在這裡處理返回的數據
-        } catch (error) {
+            document.getElementById('refreshButton').style.display = 'block';
+            } catch (error) {
             console.error("There was a problem with the fetch operation:", error);
         }
-        console.log("2",startStationId,endStationId);
         
 
     }
+    function displayRoutes(data, startStation, endStation) {
+
+        const routeDisplay = document.getElementById('routeDisplay');
+        routeDisplay.innerHTML = '';
+        routeDisplay.style.display = 'block'; 
+        const mainHeader = document.createElement('h2');
+        mainHeader.textContent = `從 ${startStation} 到 ${endStation} 的可行路線：`;
+        routeDisplay.appendChild(mainHeader);
     
+        data.options.forEach((option, pathIndex) => {
+            const pathElement = document.createElement('div');
+            pathElement.className = 'path';
+    
+            
+    
+            const optionElement = document.createElement('div');
+            optionElement.className = 'option';
+    
+            const totalMinutes = Math.floor(option.total_time / 60);
+            const totalSeconds = Math.round(option.total_time % 60);
+            const arrivalTime = new Date(option.arrival_time);
+    
+            optionElement.innerHTML = `
+                <p>  總行程時間: ${totalMinutes} 分 ${totalSeconds} 秒</p>
+                <p>  預計到達時間: ${arrivalTime.toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</p>
+            `;
+    
+            const detailsList = document.createElement('ul');
+            option.journey_details.forEach(detail => {
+                const detailItem = document.createElement('li');
+                const minutes = Math.floor(detail.time / 60);
+                const seconds = Math.round(detail.time % 60);
+    
+                if (detail.action === '等待') {
+                    detailItem.innerHTML = `
+                        在 ${detail.station} 站等待 ${minutes} 分 ${seconds} 秒<br>
+                        搭乘 ${new Date(detail.train_time).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', second:'2-digit'})} 的列車
+                    `;
+                } else if (detail.action === '乘車') {
+                    detailItem.innerHTML = `
+                        搭乘 ${detail.line} 線從 ${detail.from_station} 站到 ${detail.to_station} 站，耗時 ${minutes} 分 ${seconds} 秒<br>
+                        到達時間: ${new Date(detail.arrival_time).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}
+                    `;}
+                else if (detail.action === '轉乘') {
+                    detailItem.innerHTML = `
+                        在 ${detail.station} 站轉乘，耗時 ${minutes} 分 ${seconds} 秒<br>
+                        轉乘完成時間: ${new Date(detail.arrival_time).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}
+                    `;
+                }
+    
+                detailsList.appendChild(detailItem);
+            });
+    
+            optionElement.appendChild(detailsList);
+            pathElement.appendChild(optionElement);
+            routeDisplay.appendChild(pathElement);
+        });
+    }
+    
+ 
 
     async function updatePosition(stations) {        
         return new Promise((resolve, reject) => {
@@ -172,6 +243,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         assignStationsToLine("BL Line", result.slice(0, 23));
         assignStationsToLine("BR Line", result.slice(23, 47));
         assignStationsToLine("GREEN Line", result.slice(47, 67));
+        assignStationsToLine("GREEN Line", result.slice(47, 67));
         assignStationsToLine("O Line", result.slice(67, 93));
         assignStationsToLine("Red Line", result.slice(93, 121));
         assignStationsToLine("Y Line", result.slice(121));
@@ -182,14 +254,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function assignStationsToLine(lineName, stations) {
-    
-        lineCoordinates[lineName].forEach((coords, idx) => {
-            if (stations[idx]) {
-                StationToLine(stations[idx], lines[lineName], coords[0], coords[1]);
+    const coordinates = lineCoordinates[lineName];
+
+    if (lineName === "O Line") {
+        const mainSegmentEnd = 20;  
+        const branchStart = 21;     
+
+ 
+        for (let i = 0; i <= mainSegmentEnd; i++) {
+            StationToLine(stations[i], lines[lineName], coordinates[i][0], coordinates[i][1]);
+            if (i < mainSegmentEnd) {
+                StationToLine(stations[i+1], lines[lineName], coordinates[i+1][0], coordinates[i+1][1]);
             }
+        }
+
+        for(let i=20;i>=11;i--){
+            StationToLine(stations[i], lines[lineName], coordinates[i][0], coordinates[i][1]);
+        }
+        StationToLine(stations[branchStart], lines[lineName], coordinates[branchStart][0], coordinates[branchStart][1]);
+
+        for (let i = branchStart; i < coordinates.length - 1; i++) {
+            StationToLine(stations[i], lines[lineName], coordinates[i][0], coordinates[i][1]);
+            StationToLine(stations[i+1], lines[lineName], coordinates[i+1][0], coordinates[i+1][1]);
+        }
+    }else if (lineName === "GREEN Line") {
+        
+        const mainSegmentEnd = 18
+        for (let i = 0; i < mainSegmentEnd; i++) {
+            StationToLine(stations[i], lines[lineName], coordinates[i][0], coordinates[i][1]);
+            if (i < mainSegmentEnd) {
+                StationToLine(stations[i+1], lines[lineName], coordinates[i+1][0], coordinates[i+1][1]);
+            }
+        }
+        for(let i=18;i>=2;i--){
+            StationToLine(stations[i], lines[lineName], coordinates[i][0], coordinates[i][1]);
+        }
+        StationToLine(stations[19], lines[lineName], coordinates[19][0], coordinates[19][1]);
+        StationToLine(stations[2], lines[lineName], coordinates[2][0], coordinates[2][1]);
+        StationToLine(stations[1], lines[lineName], coordinates[1][0], coordinates[1][1]);
+        StationToLine(stations[0], lines[lineName], coordinates[0][0], coordinates[0][1]);
+
+
+    }
+    else {
+        // 处理其他线路的站点
+        lineCoordinates[lineName].forEach((coords, idx) => {
+            StationToLine(stations[idx], lines[lineName], coords[0], coords[1]);
         });
     }
-
+}
+    
+    
     function StationToLine(station, line, x, y) {
         const name = station["stationName"]["Zh_tw"];
         const full_ticket_price = ticket[name]?.["full_ticket_price"] || "N/A";
@@ -377,7 +492,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const busNameDiv = document.createElement("div");
                 busNameDiv.className = "coming-info";
-                busNameDiv.textContent = info[key]["bus_name"] || "N/A";
+                busNameDiv.textContent = info[key]["RouteName"] || "N/A";
 
                 const nowTimeDiv = document.createElement("div");
                 nowTimeDiv.className = "coming-info";
@@ -385,7 +500,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const destinationDiv = document.createElement("div");
                 destinationDiv.className = "coming-info";
-                destinationDiv.textContent = `${info[key]["destination"]} ${info[key]["Direction"] == 0 ? "(去程)" : "(回程)"}`;
+                destinationDiv.textContent = `${info[key]["Direction"]}`;
 
                 div.append(busNameDiv, nowTimeDiv, destinationDiv);
                 dynamicInfo.appendChild(div);
@@ -488,7 +603,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .y(d => d.y)
                 .curve(d3.curveLinear))
             .attr('stroke', line.color)
-            .attr('stroke-width', 7)
+            .attr('stroke-width', 9)
             .attr('fill', 'none');
 
         line.stations.forEach(station => {
@@ -505,36 +620,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             stationGroup.append('rect')
                 .attr('x', x - 12)
                 .attr('y', y - 12)
-                .attr('width', 25)
-                .attr('height', 25)
+                .attr('width', 28)
+                .attr('height', 28)
                 .attr('fill', isDefaultSelected ? "yellow" : "white")
                 .attr('stroke', line.color)
-                .attr('stroke-width', 2)
+                .attr('stroke-width', 3)
                 .attr('class', 'station-box')
                 .attr('id', `station-${encodedName}`)
 
             stationGroup.append('text')
                 .attr('class', `info-${encodedName}`)
-                .attr('x', x - 1)
-                .attr('y', y)
+                .attr('x', x+2 )
+                .attr('y', y+2)
                 .attr('text-anchor', 'middle')
                 .attr('alignment-baseline', 'middle')
                 .attr('id', 'station-text')
                 .text(currentDisplay === "ticket" ? station.full_ticket_price : station.arrive_times)
                 .style('fill', 'black')
                 .style('pointer-events', 'none')
+                .style('font-size', '16px')
                 .style('opacity', isDefaultSelected ? 0 : 1);
 
             const nameLines = splitIntoLines(decodeName(name), 3);
             nameLines.forEach((line, index) => {
                 stationGroup.append('text')
-                    .attr('x', x)
-                    .attr('y', y + 30 + (index * 14))
+                    .attr('x', x + 29)
+                    .attr('y', y + 35 + (index * 14))
                     .attr('text-anchor', 'middle')
                     .attr('class', 'label')
                     .text(line)
-                    .style('font-size', '14px')
+                    .style('font-size', '18px')
                     .style('fill', 'black')
+                    .style('font-weight', '150')
                     .style('pointer-events', 'none');
             });
 
@@ -551,19 +668,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                         document.getElementById('startPointDisplay').textContent = `起點: ${stationName} (${stationId})`;
                         addPin(this, x, y, "#4CAF50", "S");
                         startPin = this;
-                    } else if (!endPoint && stationName !== startPoint || stationId !== startId ) {
+                    } else if (!endPoint && (stationName !== startPoint || stationId !== startId) ) {
                         endPoint = stationName;
                         document.getElementById('endPointDisplay').textContent = `終點: ${stationName} (${stationId})`;
                         addPin(this, x, y, "#FF5722", "E");
                         endPin = this;
                         document.getElementById('goButton').disabled = false;
                     }
+                    console.log(startPoint,endPoint);
+                    
+                    
                 } else {
                     updatePositionDisplay(encodedName, stationId);
                 }
             })
             .on("mouseover", function() {
-                d3.select(this).select(".station-box").attr("fill", "#D2B48C");
+                d3.select(this).select(".station-box").attr("fill", "#FFD306")
             })
             .on("mouseout", function() {
                 

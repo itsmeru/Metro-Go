@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <script src="https://d3js.org/d3.v6.min.js"></script>
@@ -22,12 +23,14 @@
                 <button id="timeButton" value="time">旅程時間</button>
             </div>
             <div class="time-info">顯示的旅程時間僅包含列車行駛及轉乘的步行時間，不包含候車時間</div>
-            <svg id="metro-map" viewBox="-30 200 1200 1000" preserveAspectRatio="xMidYMid meet"></svg>
+            <svg id="metro-map" viewBox="0 -120 1200 1650" preserveAspectRatio="xMidYMid meet"></svg>
 
         </div>
         <div class="side-panel">
             <button id="ParkingButton">查看停車資訊</button>
             <button id="tripPlanButton">旅程規劃</button>
+            <button id="refreshButton" style="display: none;">重新規劃</button>
+            <div id="routeDisplay" style="display: none;"></div>
             <div class="info-container">
                 <div class="tab-container">
                     <button class="tab-button active" data-tab="train">列車進站動態</button>

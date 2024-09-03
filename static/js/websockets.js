@@ -64,7 +64,7 @@ function updateDynamicInfo(type, data) {
         }
         cache.get(type).set(stationName, info);        
     });
-    console.log(type,liveData);
+    // console.log(type,liveData);
     return liveData;
    
     

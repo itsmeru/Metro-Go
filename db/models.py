@@ -33,6 +33,7 @@ class Station(Base):
     longitude = Column(DECIMAL(11, 8), nullable=False)
 
     parking_lots = relationship("ParkingLot", back_populates="station")
+    bus_routes = relationship("BusRoute", back_populates="station")
 
 class ParkingLot(Base):
     __tablename__ = 'parking_lots'
@@ -70,12 +71,14 @@ class YoubikeStation(Base):
     bike_address = Column(String(200), nullable=True)
 
 class BusRoute(Base):
-    __tablename__ = 'bus_route'
+    __tablename__ = 'bus_routes'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    route_id = Column(String(10), nullable=False, index=True)
-    departure_stop_name_zh = Column(String(50), nullable=False)
-    destination_stop_name_zh = Column(String(50), nullable=False)
-    update_time = Column(DateTime, nullable=False, index=True)
+    station_id = Column(Integer, ForeignKey('stations.id'), nullable=False, index=True)
+    stop_name = Column(String(255), nullable=False)
+    route_name = Column(String(255), nullable=False, index=True)
+    departure = Column(String(255), nullable=False)
+    destination = Column(String(255), nullable=False)
+    station = relationship("Station", back_populates="bus_routes")
 
 

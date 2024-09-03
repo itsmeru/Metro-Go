@@ -1,5 +1,4 @@
-import { getTicket } from "./getTickets.js";
-import { getStationTimes } from "./getTime.js";
+import { getTicket,getStationTimes} from "./getFunction.js"
 import { lines } from "./coord.js"
 import { encodeName} from "./globalVar.js"
 
