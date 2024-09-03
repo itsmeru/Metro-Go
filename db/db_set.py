@@ -13,7 +13,6 @@ logging.getLogger('sqlalchemy.engine').setLevel(logging.ERROR)
 # DATABASE_URL = f"mysql+aiomysql://{os.getenv('RDS_USER')}:{os.getenv('RDS_PASSWORD')}@{os.getenv('RDS_HOST')}:{os.getenv('RDS_PORT')}/{os.getenv('RDS_METRO')}"
 # DATABASE_URL = f"mysql+aiomysql://{os.getenv('RDS_USER')}:{os.getenv('RDS_PASSWORD')}@127.0.0.1:3307/metro"
 
-DATABASE_URL = f"mysql+aiomysql://root:betty520@mydb:3306/metro"
 
 
 
