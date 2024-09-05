@@ -1,7 +1,7 @@
 export let lines = {
     "Red Line": { color: "red", stations: [] },
     "BL Line": { color: "blue", stations: [] },
-    "BR Line": { color: "brown", stations: [] },
+    "BR Line": { color: "#B18145", stations: [] },
     "O Line": { color: "orange", stations: [] },
     "GREEN Line": { color: "green", stations: [] },
     "Y Line": { color: "#FFD700", stations: [] },

@@ -23,13 +23,22 @@
                 <button id="timeButton" value="time">旅程時間</button>
             </div>
             <div class="time-info">顯示的旅程時間僅包含列車行駛及轉乘的步行時間，不包含候車時間</div>
-            <svg id="metro-map" viewBox="0 -120 1200 1650" preserveAspectRatio="xMidYMid meet"></svg>
-
+            <!-- <div id="tooltip" class="tooltip">
+                <p>點選車站方框可以切換車站</p>
+                <div class="icon-container">
+                    <div class="pointer-icon">
+                        <i class="fas fa-hand-point-right"></i>
+                    </div>
+                    <div class="box-icon"></div>
+                    西門
+                </div>
+            </div> -->
+            <svg id="metro-map" viewBox="-100 -190 1400 1920" preserveAspectRatio="xMidYMid meet"></svg>
+            
         </div>
         <div class="side-panel">
             <button id="ParkingButton">查看停車資訊</button>
             <button id="tripPlanButton">旅程規劃</button>
-            <button id="refreshButton" style="display: none;">重新規劃</button>
             <div id="routeDisplay" style="display: none;"></div>
             <div class="info-container">
                 <div class="tab-container">

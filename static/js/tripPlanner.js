@@ -1,17 +1,18 @@
 export function addPin(stationGroup, x, y, color, label) {
+    
     const svg = d3.select(stationGroup.ownerSVGElement);
     
     const pinColors = {
-        "start": "#4A90E2",
-        "end": "#FF9500"
+        "起": "#2563eb",
+        "迄": "rgb(206, 0, 0)"
     };
-    const pinColor = pinColors[color] || color;
+    
+    const pinColor = pinColors[label] || color;
 
     const pin = d3.select(stationGroup).append("g")
         .attr("class", "pin-marker")
-        .attr("transform", `translate(${x},${y - 8})`);
+        .attr("transform", `translate(${x+1.7},${y - 3})`);
 
-    // 添加阴影效果
     const filterId = `drop-shadow-${label.replace(/\s+/g, '-')}`;
     const filter = svg.append("defs")
         .append("filter")
@@ -31,11 +32,12 @@ export function addPin(stationGroup, x, y, color, label) {
     feMerge.append("feMergeNode").attr("in", "offsetBlur");
     feMerge.append("feMergeNode").attr("in", "SourceGraphic");
 
-    // 添加脉冲动画
+    
+    
     const pulseAnimation = svg.append("defs")
         .append("radialGradient")
         .attr("id", `pulse-${label}`)
-        .attr("r", "50%");
+        .attr("r", "60%");
 
     pulseAnimation.append("animate")
         .attr("attributeName", "r")
@@ -43,104 +45,40 @@ export function addPin(stationGroup, x, y, color, label) {
         .attr("dur", "2s")
         .attr("repeatCount", "indefinite");
 
-    // 创建底部小圆点和白色圆环
     const bottomGroup = pin.append("g")
         .attr("transform", "translate(0, 5)");
 
-    bottomGroup.append("circle")  // 白色外圈
-        .attr("r", 15)
-        .attr("fill", "white");
 
-    bottomGroup.append("circle")  // 彩色内圈
-        .attr("r", 8)
-        .attr("fill", pinColor);
+    bottomGroup.append("circle")  // 内圈
+        .attr("r", 7)
+        .attr("fill", pinColor  )
 
-    // 添加脉冲效果
-    bottomGroup.append("circle")
-        .attr("r", 8)
-        .attr("fill", `url(#pulse-${label})`)
-        .style("opacity", 0.5);
 
-    // 创建主体形状
+ 
     const mainShape = pin.append("path")
         .attr("d", "M0-25c-7 0-12.5 5.5-12.5 12.5 0 8.25 12.5 25 12.5 25s12.5-16.75 12.5-25c0-7-5.5-12.5-12.5-12.5z")
-        .attr("fill", pinColor)
-        .attr("transform", "scale(1.65) translate(0, -15)");
+        .attr("fill",  pinColor  )
+        .attr("transform", "scale(2.3) translate(0, -12)");
 
-    // 创建白色圆形背景
+    // 白色背景
     const whiteBg = pin.append("circle")
         .attr("cx", 0)
-        .attr("cy", -42)
-        .attr("r", 17)
+        .attr("cy", -55)
+        .attr("r", 22)
         .attr("fill", "white");
 
-    // 添加文字标签
     const text = pin.append("text")
         .attr("text-anchor", "middle")
-        .attr("dy", "-1.8em")
-        .attr("fill", "#000000")
+        .attr("dy", "-1.85em")
+        .attr("fill",  pinColor  )
         .attr("font-weight", "bold")
-        .attr("font-size", "20px")
+        .attr("font-size", "26px")
         .text(label);
+        
 
     pin.attr("filter", `url(#${filterId})`);
 
-    // 添加悬停效果
-    pin.on("mouseover", function() {
-        mainShape.transition().duration(200).attr("transform", "scale(1.75) translate(0, -14)");
-        whiteBg.transition().duration(200).attr("r", 18);
-        text.transition().duration(200).attr("font-size", "21px");
-    }).on("mouseout", function() {
-        mainShape.transition().duration(200).attr("transform", "scale(1.65) translate(0, -15)");
-        whiteBg.transition().duration(200).attr("r", 17);
-        text.transition().duration(200).attr("font-size", "20px");
-    });
-
-    // 添加点击波纹效果
-    function addClickRipple(x, y) {
-        const ripple = pin.append("circle")
-            .attr("cx", x)
-            .attr("cy", y)
-            .attr("r", 0)
-            .style("fill", "none")
-            .style("stroke", pinColor)
-            .style("stroke-opacity", 1)
-            .style("stroke-width", 3);
-
-        ripple.transition()
-            .duration(1000)
-            .attr("r", 50)
-            .style("stroke-opacity", 0)
-            .remove();
-    }
-
-    // 添加点击事件监听器
-    pin.on("click", function(event) {
-        const [x, y] = d3.pointer(event);
-        addClickRipple(x, y);
-        
-        // 添加缩放动画
-        mainShape.transition()
-            .duration(200)
-            .attr("transform", "scale(1.8) translate(0, -14)")
-            .transition()
-            .duration(200)
-            .attr("transform", "scale(1.65) translate(0, -15)");
-        
-        whiteBg.transition()
-            .duration(200)
-            .attr("r", 19)
-            .transition()
-            .duration(200)
-            .attr("r", 17);
-        
-        text.transition()
-            .duration(200)
-            .attr("font-size", "22px")
-            .transition()
-            .duration(200)
-            .attr("font-size", "20px");
-    });
+   
 
     svg.node().appendChild(pin.node());
 }

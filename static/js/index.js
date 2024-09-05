@@ -20,10 +20,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
    
     const result = await getStation();
-    // console.log(result);
-    
     const ticket = await getTicket(position);
     const times = await getStationTimes(position, stationIds);
+    // 定義路線顏色映射
+    const lineColors = {
+        'R': "#CE0000",
+        'G': "green",
+        'O': "orange",
+        'BL': "blue",
+        'BR': "#B18145",
+        'Y': "#FFD700"
+    };
 
     // 初始化地圖
     initializeMap();
@@ -37,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         tripInfoDiv.style.display = 'none';
         tripInfoDiv.innerHTML = `
             <div class="trip-info-header">
-                <h3>旅程規劃</h3>
+                <h3>旅程規劃(請在地圖上點選起迄站)</h3>
                 <button id="closeTripInfo">X</button>
             </div>
             <div id="startPointDisplay">起站: 未選擇</div>
@@ -49,31 +56,51 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         tripPlannerButton.addEventListener('click', toggleTripPlanner);
         document.getElementById('closeTripInfo').addEventListener('click', closeTripPlanner);
-        document.getElementById('goButton').addEventListener('click', ()=>{calculateTrip();closeTripPlanner()});
-        document.getElementById('resetButton').addEventListener('click', resetSelection);
-        // document.getElementById('refreshButton').addEventListener('click', () => {
-        //     document.getElementById('routeDisplay').style.display = 'none';
-        //     calculateTrip();
-        // });
-        // document.getElementById('closeTripInfo').addEventListener('click',()=>{
-        //     document.getElementById('refreshButton').style.display = 'none';
+        document.getElementById('goButton').addEventListener('click', ()=>{
+            calculateTrip();
+            document.getElementById('goButton').disabled = true;
+        });
+        document.getElementById('resetButton').addEventListener('click', ()=>{
+            resetSelection();
+            document.getElementById('goButton').disabled = false;
+        });
+      
+        document.getElementById('closeTripInfo').addEventListener('click',()=>{
+            document.getElementById('refreshButton').style.display = 'none';
 
-        // })   
+        })   
     }
+  
     function toggleTripPlanner() {
         tripPlannerActive = !tripPlannerActive;
         const tripInfoDiv = document.getElementById('tripInfo');
+        const metroMap = d3.selectAll('.station-group,path:not(.route-group path)');
+    
         if (tripPlannerActive) {
             tripInfoDiv.style.display = 'block';
             clearStationBoxes();
+            if (metroMap) {
+                metroMap.style('opacity', 0.7); ;
+            }
         } else {
             closeTripPlanner();
+            if (metroMap) {
+                metroMap.style('opacity', 1); ;
+            }
         }
     }
     function closeTripPlanner() {
         tripPlannerActive = false;
         const tripInfoDiv = document.getElementById('tripInfo');
+        const metroMap = d3.selectAll('.station-group,path:not(.route-group path)');
+
         tripInfoDiv.style.display = 'none';
+        const routeDisplay = document.getElementById('routeDisplay');
+        routeDisplay.style.display = 'none';
+        if (metroMap){
+            metroMap.style('opacity', 1); ;
+        }
+        svg.selectAll('.route-group').remove();
         resetSelection();
         restoreOriginalDisplay();
     }
@@ -88,10 +115,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     function resetSelection() {
         startPoint = null;
         endPoint = null;
-        document.getElementById('startPointDisplay').textContent = '起點: 未選擇';
-        document.getElementById('endPointDisplay').textContent = '終點: 未選擇';
+        document.getElementById('startPointDisplay').textContent = '起站: 未選擇';
+        document.getElementById('endPointDisplay').textContent = '訖站: 未選擇';
         document.getElementById('goButton').disabled = true;
+        const routeDisplay = document.getElementById('routeDisplay');
+        routeDisplay.style.display = 'none';
         d3.selectAll('.station-box').attr('fill', 'white');
+        svg.selectAll('.route-group').remove();
         clearPins();
     }
 
@@ -118,6 +148,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let endStationId = endPointDisplay.split("(")[1].replace(")", "").trim();
         let startStation = startPointDisplay.split(" ")[1];
         let endStation= endPointDisplay.split(" ")[1];
+        
         const url = `/api/mrt/planning?start_station_id=${encodeURIComponent(startStationId)}&end_station_id=${encodeURIComponent(endStationId)}`;
         try {
             const response = await fetch(url, {
@@ -132,7 +163,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
     
             const data = await response.json();
-            console.log("Planning result:", data);
             let selectedData;
            
             selectedData = data["result"][0];
@@ -147,20 +177,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         
 
     }
-    function displayRoutes(data, startStation, endStation) {
+    function getLineColor(stationCode) {
+            
+        let lineCode = stationCode.charAt(0);
 
+        if (lineColors.hasOwnProperty(stationCode.substring(0, 2))) {
+            lineCode = stationCode.substring(0, 2);
+        }
+        
+        return lineColors[lineCode] || "#CCCCCC"; 
+    }
+
+  
+    function displayRoutes(data, startStation, endStation) {
         const routeDisplay = document.getElementById('routeDisplay');
         routeDisplay.innerHTML = '';
-        routeDisplay.style.display = 'block'; 
+        routeDisplay.style.display = 'block';
+        
         const mainHeader = document.createElement('h2');
-        mainHeader.textContent = `從 ${startStation} 到 ${endStation} 的可行路線：`;
+        mainHeader.textContent = `從 ${startStation} 到 ${endStation} 的可行路線`;
         routeDisplay.appendChild(mainHeader);
     
-        data.options.forEach((option, pathIndex) => {
+        // 清除之前的路徑
+        svg.selectAll('.route-group').remove();
+    
+        // 創建新的路徑組
+        const routeGroup = svg.append('g')
+            .attr('class', 'route-group')
+            .attr('opacity', 1);
+    
+    
+       
+        data.options.forEach((option, pathIndexs) => {
             const pathElement = document.createElement('div');
             pathElement.className = 'path';
-    
-            
     
             const optionElement = document.createElement('div');
             optionElement.className = 'option';
@@ -168,45 +218,136 @@ document.addEventListener('DOMContentLoaded', async () => {
             const totalMinutes = Math.floor(option.total_time / 60);
             const totalSeconds = Math.round(option.total_time % 60);
             const arrivalTime = new Date(option.arrival_time);
-    
+         
             optionElement.innerHTML = `
-                <p>  總行程時間: ${totalMinutes} 分 ${totalSeconds} 秒</p>
-                <p>  預計到達時間: ${arrivalTime.toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</p>
+                <button id="refreshButton" aria-label="更新時間">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <p>總行程「時間」: ${totalMinutes} 分 ${totalSeconds} 秒</p>
+                <p>預計到達「時間」: 
+                ${new Date(arrivalTime).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', timeZone: 'Asia/Taipei', hour12: false})} 
+                </p>
             `;
+            
+            const refreshButton = optionElement.querySelector('#refreshButton');
+            refreshButton.addEventListener('click', calculateTrip);
     
             const detailsList = document.createElement('ul');
-            option.journey_details.forEach(detail => {
+    
+            option.journey_details.forEach((detail, index) => {
+                
                 const detailItem = document.createElement('li');
                 const minutes = Math.floor(detail.time / 60);
                 const seconds = Math.round(detail.time % 60);
-    
+                
+                let stationCode, stationColor;
                 if (detail.action === '等待') {
+                    stationCode = detail.station_id;
+                    stationColor = getLineColor(stationCode);
                     detailItem.innerHTML = `
-                        在 ${detail.station} 站等待 ${minutes} 分 ${seconds} 秒<br>
-                        搭乘 ${new Date(detail.train_time).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', second:'2-digit'})} 的列車
+                        <span class="line-color">${detail.station}站</span>
+                        <div>等待 ${minutes} 分 ${seconds} 秒, 往<span class="direction-color">${detail.direction}</span>方向</div>
+                        <div>搭乘 
+                        ${new Date(detail.train_time).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', timeZone: 'Asia/Taipei', hour12: false})} 
+                        的列車</div>
                     `;
-                } else if (detail.action === '乘車') {
+                } else if (detail.action === '乘車' && index === option.journey_details.length - 1) {
+                    stationCode = detail.station_id;
+                    stationColor = getLineColor(stationCode);
                     detailItem.innerHTML = `
-                        搭乘 ${detail.line} 線從 ${detail.from_station} 站到 ${detail.to_station} 站，耗時 ${minutes} 分 ${seconds} 秒<br>
-                        到達時間: ${new Date(detail.arrival_time).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}
-                    `;}
-                else if (detail.action === '轉乘') {
-                    detailItem.innerHTML = `
-                        在 ${detail.station} 站轉乘，耗時 ${minutes} 分 ${seconds} 秒<br>
-                        轉乘完成時間: ${new Date(detail.arrival_time).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}
+                        <span class="line-color">${detail.to_station}站</span>
+                        <div>抵達時間: 
+                        ${new Date(arrivalTime).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', timeZone: 'Asia/Taipei', hour12: false})} 
+                        </div>
                     `;
+                } else if (detail.action === '轉乘') {
+                    
+                    stationCode = detail.station_id;
+                    stationColor = getLineColor(stationCode);
+                    detailItem.innerHTML = `
+                        <span class="line-color">${detail.station}站</span>
+                        <div>轉乘步行約 ${minutes} 分鐘</div>
+                    `;
+                
                 }
-    
-                detailsList.appendChild(detailItem);
+                
+            
+                // 設置背景顏色
+                const lineColorElement = detailItem.querySelector('.line-color');
+                const directionColor = detailItem.querySelector('.direction-color');
+                if (lineColorElement) {
+                    lineColorElement.style.backgroundColor = stationColor;
+                }
+                if(directionColor){
+                    directionColor.style.color = stationColor;
+                    directionColor.style.padding = '0';
+                    directionColor.style.margin = '0 5px';
+                }
+                
+
+                if (detailItem.innerHTML !== '') {
+                    detailsList.appendChild(detailItem);
+                }
+                
             });
     
             optionElement.appendChild(detailsList);
             pathElement.appendChild(optionElement);
             routeDisplay.appendChild(pathElement);
+    
+            drawPathAndStations(routeGroup, data.path[1]);
         });
     }
     
- 
+    function drawPathAndStations(routeGroup, stationCodes) {
+        
+        const pathCoordinates = stationCodes.map(getStationCoordinates).filter(coord => coord !== null);
+        
+        if (pathCoordinates.length > 1) {
+            const pathColor = "#484848";  // 路徑
+            const stationFillColor = "#FFFFFF";  // 點
+            const stationStrokeColor = "#696969";  // 邊框
+    
+            // 路徑
+            routeGroup.append('path')
+                .datum(pathCoordinates)
+                .attr('d', d3.line()
+                    .x(d => d.x+2)
+                    .y(d => d.y)
+                    .curve(d3.curveLinear))
+                .attr('stroke-width', 15)
+                .attr('stroke', pathColor)
+                .attr('fill', 'none')
+          
+            // 站點
+            routeGroup.selectAll('.station-point')
+                .data(pathCoordinates)
+                .enter()
+                .append('circle')
+                .attr('class', 'station-point')
+                .attr('cx', d => d.x+2)
+                .attr('cy', d => d.y+3)
+                .attr('r', 9)  
+                .attr('fill', stationFillColor)
+                .attr('stroke', stationStrokeColor)
+                .attr('stroke-width', 4);
+    
+           
+        }
+    }
+    
+    function getStationCoordinates(stationCode) {
+        
+        for (const lineName in lines) {
+            const station = lines[lineName].stations.find(s => s.stationId === stationCode);
+            if (station) {
+                return { x: station.x, y: station.y,};
+            }
+        }
+        console.warn(`無法找到站點代碼 ${stationCode} 的座標`);
+        return null;
+    }
+    
 
     async function updatePosition(stations) {        
         return new Promise((resolve, reject) => {
@@ -243,7 +384,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         assignStationsToLine("BL Line", result.slice(0, 23));
         assignStationsToLine("BR Line", result.slice(23, 47));
         assignStationsToLine("GREEN Line", result.slice(47, 67));
-        assignStationsToLine("GREEN Line", result.slice(47, 67));
         assignStationsToLine("O Line", result.slice(67, 93));
         assignStationsToLine("Red Line", result.slice(93, 121));
         assignStationsToLine("Y Line", result.slice(121));
@@ -251,16 +391,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         Object.entries(lines).forEach(([lineName, line]) => {
             drawStations(lineName, line);
         });
+        
     }
 
     function assignStationsToLine(lineName, stations) {
     const coordinates = lineCoordinates[lineName];
-
+        
     if (lineName === "O Line") {
         const mainSegmentEnd = 20;  
         const branchStart = 21;     
 
- 
         for (let i = 0; i <= mainSegmentEnd; i++) {
             StationToLine(stations[i], lines[lineName], coordinates[i][0], coordinates[i][1]);
             if (i < mainSegmentEnd) {
@@ -278,7 +418,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             StationToLine(stations[i+1], lines[lineName], coordinates[i+1][0], coordinates[i+1][1]);
         }
     }else if (lineName === "GREEN Line") {
-        
         const mainSegmentEnd = 18
         for (let i = 0; i < mainSegmentEnd; i++) {
             StationToLine(stations[i], lines[lineName], coordinates[i][0], coordinates[i][1]);
@@ -379,18 +518,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function updateBikeDisplay(info, stationName) {
-        if (info === null){
-                dynamicInfo.textContent = "資料更新中";
-            const countdownCircle = createCountdownCircle();
-            dynamicInfo.appendChild(countdownCircle);
-            return ;
-        }
         const dynamicInfo = document.querySelector(".dynamic-bike");
         if (!dynamicInfo) {
             console.error("No element with class 'dynamic-bike' found");
             return;
         }
-
+        
+       
         try {
             dynamicInfo.innerHTML = `
                 <h2>YouBike 動態</h2>
@@ -401,7 +535,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
             const countdownCircle = createCountdownCircle();
             dynamicInfo.appendChild(countdownCircle);
-
             const countDown = 60;
             let timeLeft = countDown;
             const countdownInterval = setInterval(() => {
@@ -412,51 +545,105 @@ document.addEventListener('DOMContentLoaded', async () => {
                     timeLeft--;
                 }
             }, 1000);
-            const div = document.createElement("div");
-            div.innerHTML = `
-                <div class='coming-title'>地點</div>
-                <div class='coming-title'>可還車數量</div>
-                <div class='coming-title'>可租車數量</div>
-                `
-            div.className = "metro-coming";
-            dynamicInfo.appendChild(div);
-            for (const key in info) {
-                const div = document.createElement("div");
-                div.className = "metro-coming";
-
-                const bikeNameDiv = document.createElement("div");
-                bikeNameDiv.className = "coming-info";
-                bikeNameDiv.textContent = info[key]["StationName"] || "N/A";
-
-                const returnDiv = document.createElement("div");
-                returnDiv.className = "coming-info";
-                returnDiv.textContent = info[key]["AvailableReturnBikes"] ? `${info[key]["AvailableReturnBikes"]}` : "0";
-
-                const rentDiv = document.createElement("div");
-                rentDiv.className = "coming-info";
-                rentDiv.textContent = info[key]["AvailableRentBikes"] ? ` ${info[key]["AvailableRentBikes"]}` : "0";
-
-                div.append(bikeNameDiv, returnDiv, rentDiv);
-                dynamicInfo.appendChild(div);
+    
+            const bikeInfoContainer = document.createElement("div");
+            bikeInfoContainer.className = "bike-info-container";
+            dynamicInfo.appendChild(bikeInfoContainer);
+    
+            const infoArray = Object.values(info);
+            const pageSize = 8;
+            const totalPages = Math.ceil(infoArray.length / pageSize);
+            let currentPage = 0;
+    
+            function createPaginationControls() {
+                const paginationContainer = document.createElement("div");
+                paginationContainer.className = "pagination-container";
+    
+                const prevButton = document.createElement("button");
+                prevButton.className = "pagination-button";
+                prevButton.addEventListener("click", () => changePage(currentPage - 1));
+    
+                const nextButton = document.createElement("button");
+                nextButton.className = "pagination-button";
+                nextButton.addEventListener("click", () => changePage(currentPage + 1));
+    
+                const pageIndicator = document.createElement("div");
+                pageIndicator.className = "page-indicator-bike";
+    
+                paginationContainer.append(prevButton, pageIndicator, nextButton);
+                dynamicInfo.insertBefore(paginationContainer, bikeInfoContainer);
             }
+    
+            function updatePagination() {
+                const pageIndicator = dynamicInfo.querySelector(".page-indicator-bike");
+                pageIndicator.innerHTML = '';
+    
+                for (let i = 0; i < totalPages; i++) {
+                    const pageNumber = document.createElement("span");
+                    pageNumber.textContent = i + 1;
+                    pageNumber.className = i === currentPage ? "page-number current-page" : "page-number";
+                    pageNumber.addEventListener("click", () => changePage(i));
+                    pageIndicator.appendChild(pageNumber);
+                }
+            }
+    
+            function displayPage(page) {
+                bikeInfoContainer.innerHTML = `
+                    <div class="metro-coming header">
+                        <div class='coming-title'>地點</div>
+                        <div class='coming-title'>可還車數量</div>
+                        <div class='coming-title'>可租車數量</div>
+                    </div>
+                `;
+    
+                const start = page * pageSize;
+                const end = Math.min(start + pageSize, infoArray.length);
+    
+                for (let i = start; i < end; i++) {
+                    const bikeInfo = infoArray[i];
+                    const div = document.createElement("div");
+                    div.className = "metro-coming";
+    
+                    const bikeNameDiv = document.createElement("div");
+                    bikeNameDiv.className = "coming-info";
+                    bikeNameDiv.textContent = bikeInfo["StationName"] || "N/A";
+    
+                    const returnDiv = document.createElement("div");
+                    returnDiv.className = "coming-info";
+                    returnDiv.textContent = bikeInfo["AvailableReturnBikes"] ? `${bikeInfo["AvailableReturnBikes"]}` : "0";
+    
+                    const rentDiv = document.createElement("div");
+                    rentDiv.className = "coming-info";
+                    rentDiv.textContent = bikeInfo["AvailableRentBikes"] ? ` ${bikeInfo["AvailableRentBikes"]}` : "0";
+    
+                    div.append(bikeNameDiv, returnDiv, rentDiv);
+                    bikeInfoContainer.appendChild(div);
+                }
+    
+                updatePagination();
+            }
+    
+            function changePage(newPage) {
+                currentPage = (newPage + totalPages) % totalPages;
+                displayPage(currentPage);
+            }
+    
+            createPaginationControls();
+            displayPage(currentPage);
+    
         } catch (error) {
             console.error("Error fetching bike info:", error);
             dynamicInfo.textContent = "Error loading bike information.";
         }
     }
     function updateBusDisplay(info, stationName) {
-        if (info === null){
-                dynamicInfo.textContent = "資料更新中";
-            const countdownCircle = createCountdownCircle();
-            dynamicInfo.appendChild(countdownCircle);
-            return ;
-        }
         const dynamicInfo = document.querySelector(".dynamic-bus");
         if (!dynamicInfo) {
             console.error("No element with class 'dynamic-bus' found");
             return;
         }
-
+    
+    
         try {
             dynamicInfo.innerHTML = `
                 <h2>Bus 動態</h2>
@@ -467,7 +654,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
             const countdownCircle = createCountdownCircle();
             dynamicInfo.appendChild(countdownCircle);
-
             const countDown = 30;
             let timeLeft = countDown;
             const countdownInterval = setInterval(() => {
@@ -478,38 +664,101 @@ document.addEventListener('DOMContentLoaded', async () => {
                     timeLeft--;
                 }
             }, 1000);
-            const div = document.createElement("div");
-            div.innerHTML = `
-                <div class='coming-title'>公車號碼</div>
-                <div class='coming-title'>倒數進站時間</div>
-                <div class='coming-title'>方向</div>
-                `
-            div.className = "metro-coming";
-            dynamicInfo.appendChild(div);
-            for (const key in info) {
-                const div = document.createElement("div");
-                div.className = "metro-coming";
-
-                const busNameDiv = document.createElement("div");
-                busNameDiv.className = "coming-info";
-                busNameDiv.textContent = info[key]["RouteName"] || "N/A";
-
-                const nowTimeDiv = document.createElement("div");
-                nowTimeDiv.className = "coming-info";
-                nowTimeDiv.textContent = info[key]["EstimateTime"];
-
-                const destinationDiv = document.createElement("div");
-                destinationDiv.className = "coming-info";
-                destinationDiv.textContent = `${info[key]["Direction"]}`;
-
-                div.append(busNameDiv, nowTimeDiv, destinationDiv);
-                dynamicInfo.appendChild(div);
+    
+            const busInfoContainer = document.createElement("div");
+            busInfoContainer.className = "bus-info-container";
+            dynamicInfo.appendChild(busInfoContainer);
+    
+            const infoArray = Object.values(info);
+            const pageSize = 8;
+            const totalPages = Math.ceil(infoArray.length / pageSize);
+          
+            
+            let currentPage = 0;
+    
+            function createPaginationControls() {
+                const paginationContainer = document.createElement("div");
+                paginationContainer.className = "pagination-container";
+    
+                const prevButton = document.createElement("button");
+                prevButton.className = "pagination-button";
+                prevButton.addEventListener("click", () => changePage(currentPage - 1));
+    
+                const nextButton = document.createElement("button");
+                nextButton.className = "pagination-button";
+                nextButton.addEventListener("click", () => changePage(currentPage + 1));
+    
+                const pageIndicator = document.createElement("div");
+                pageIndicator.className = "page-indicator";
+    
+                paginationContainer.append(prevButton, pageIndicator, nextButton);
+                dynamicInfo.insertBefore(paginationContainer, busInfoContainer);
             }
+    
+            function updatePagination() {
+                const pageIndicator = document.querySelector(".page-indicator");
+                pageIndicator.innerHTML = '';
+    
+                for (let i = 0; i < totalPages; i++) {
+                    const pageNumber = document.createElement("span");
+                    pageNumber.textContent = i + 1;
+                    pageNumber.className = i === currentPage ? "page-number current-page" : "page-number";
+                    pageNumber.addEventListener("click", () => changePage(i));
+                    pageIndicator.appendChild(pageNumber);
+                }
+            }
+    
+            function displayPage(page) {
+                busInfoContainer.innerHTML = `
+                    <div class="metro-coming header">
+                        <div class='coming-title'>公車號碼</div>
+                        <div class='coming-title'>倒數進站時間</div>
+                        <div class='coming-title'>方向</div>
+                    </div>
+                `;
+    
+                const start = page * pageSize;
+                const end = Math.min(start + pageSize, infoArray.length);
+                
+                for (let i = start; i < end; i++) {
+                    const busInfo = infoArray[i];
+                    const div = document.createElement("div");
+                    div.className = "metro-coming";
+    
+                    const busNameDiv = document.createElement("div");
+                    busNameDiv.className = "coming-info";
+                    busNameDiv.textContent = busInfo["RouteName"] || "N/A";
+    
+                    const nowTimeDiv = document.createElement("div");
+                    nowTimeDiv.className = "coming-info";
+                    nowTimeDiv.textContent = busInfo["EstimateTime"];
+    
+                    const destinationDiv = document.createElement("div");
+                    destinationDiv.className = "coming-info";
+                    destinationDiv.textContent = `${busInfo["Direction"]}`;
+    
+                    div.append(busNameDiv, nowTimeDiv, destinationDiv);
+                    busInfoContainer.appendChild(div);
+                }
+    
+                updatePagination();
+            }
+    
+            function changePage(newPage) {
+                currentPage = (newPage + totalPages) % totalPages;
+                displayPage(currentPage);
+            }
+    
+            createPaginationControls();
+            displayPage(currentPage);
+    
+    
         } catch (error) {
-            console.error("Error fetching bike info:", error);
-            dynamicInfo.textContent = "Error loading bike information.";
+            console.error("Error fetching bus info:", error);
+            dynamicInfo.textContent = "Error loading bus information.";
         }
     }
+
     let currentSubscribedStation = null;
     async function onStationClick(stationNames) {
         let stationName = decodeName(stationNames);
@@ -564,10 +813,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentElement.style('opacity', 0);
     
         lastSelectedStation = encodedName;
-    
+        
     
         d3.selectAll('.station-box').attr('fill', "white");
-        d3.selectAll(`#station-${encodedName}`).attr('fill', "yellow");
+        d3.selectAll(`#station-${encodedName}`)
+        .attr('fill', "yellow")
+       
+
     
         position = encodedName;
         stationIds = stationId;
@@ -620,8 +872,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             stationGroup.append('rect')
                 .attr('x', x - 12)
                 .attr('y', y - 12)
-                .attr('width', 28)
-                .attr('height', 28)
+                .attr('width', 30)
+                .attr('height', 30)
                 .attr('fill', isDefaultSelected ? "yellow" : "white")
                 .attr('stroke', line.color)
                 .attr('stroke-width', 3)
@@ -638,7 +890,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .text(currentDisplay === "ticket" ? station.full_ticket_price : station.arrive_times)
                 .style('fill', 'black')
                 .style('pointer-events', 'none')
-                .style('font-size', '16px')
+                .style('font-size', '18px')
                 .style('opacity', isDefaultSelected ? 0 : 1);
 
             const nameLines = splitIntoLines(decodeName(name), 3);
@@ -666,16 +918,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                         startPoint = stationName;
                         startId = stationId;
                         document.getElementById('startPointDisplay').textContent = `起點: ${stationName} (${stationId})`;
-                        addPin(this, x, y, "#4CAF50", "S");
+                        addPin(this, x, y, "#0070BF", "起");
                         startPin = this;
                     } else if (!endPoint && (stationName !== startPoint || stationId !== startId) ) {
                         endPoint = stationName;
                         document.getElementById('endPointDisplay').textContent = `終點: ${stationName} (${stationId})`;
-                        addPin(this, x, y, "#FF5722", "E");
+                        addPin(this, x, y, "#0070BF", "迄");
                         endPin = this;
                         document.getElementById('goButton').disabled = false;
                     }
-                    console.log(startPoint,endPoint);
                     
                     
                 } else {
@@ -695,10 +946,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
     }
-        function getFullStationName(stationGroup) {
-            const labels = d3.select(stationGroup).selectAll('.label');
-            return labels.nodes().map(node => node.textContent).join('');
-        }
+    function getFullStationName(stationGroup) {
+        const labels = d3.select(stationGroup).selectAll('.label');
+        return labels.nodes().map(node => node.textContent).join('');
+    }
 
 
 
@@ -733,27 +984,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     onBusClick(position);
     // 嘗試更新用戶位置
     function delayedUserPosition(delay = 1000) {
-        setTimeout(async function tryUserPosition() {
-            try {
-                const stationInfo = await updatePosition(result);
-                stationIds = stationInfo.stationIds;
-                const stationName= stationIds == "Y16" ? encodeName("Y板橋") : encodeName(stationInfo.position);
-
-                console.log("成功獲取位置信息:", stationName, stationIds);
-
-                updatePositionDisplay(stationName, stationIds);
-            } catch (error) {
-                if (error.message === "PERMISSION_DENIED") {
-                    console.log("位置更新失敗: 權限被拒絕");
-                } else {
-                    console.log("位置更新失敗:", error.message);
-                    // 如果不是權限問題，則在短暫延遲後重試
-                    setTimeout(tryUserPosition, delay);
-                }
-            }
-        }, delay);
-    }
+        let count = 0;
+        const maxAttempts = 10;
     
+        function tryUserPosition() {
+            if (count >= maxAttempts) {
+                console.log("已嘗試10次，停止更新位置");
+                return;
+            }
+    
+            setTimeout(async function() {
+                try {
+                    const stationInfo = await updatePosition(result);
+                    stationIds = stationInfo.stationIds;
+                    const stationName = stationIds == "Y16" ? encodeName("Y板橋") : encodeName(stationInfo.position);
+    
+                    console.log("成功獲取位置信息:", stationName, stationIds);
+    
+                    updatePositionDisplay(stationName, stationIds);
+                } catch (error) {
+                    count++;
+                    if (error.message === "PERMISSION_DENIED") {
+                        console.log("位置更新失敗: 權限被拒絕");
+                    } else {
+                        console.log(`位置更新失敗 (第${count}次嘗試):`, error.message);
+                        if (count < maxAttempts) {
+                            tryUserPosition();
+                        } else {
+                            console.log("已達到最大嘗試次數，停止更新位置");
+                        }
+                    }
+                }
+            }, delay);
+        }
+    
+        tryUserPosition();
+    }
     // 使用方法
     delayedUserPosition();
    

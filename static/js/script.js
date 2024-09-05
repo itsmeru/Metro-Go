@@ -1,4 +1,4 @@
-import {position, stationIds, userLat, userLon} from "./globalVar.js";
+import {position} from "./globalVar.js";
 document.addEventListener('DOMContentLoaded', (event) => {
 
     const parkingButton = document.getElementById('ParkingButton');
@@ -65,7 +65,7 @@ async function initMap() {
 
     let parking_lots = parking_data["parking_lots"];
     const bounds = new google.maps.LatLngBounds();
-
+    let currentOpenInfoWindow = null;
     parking_lots.forEach(lot => {
         const position = { lat: lot["parking_lot_latitude"], lng: lot["parking_lot_longitude"] };
         const marker = new google.maps.Marker({
@@ -81,7 +81,11 @@ async function initMap() {
         });
 
         marker.addListener('click', () => {
+            if (currentOpenInfoWindow) {
+                currentOpenInfoWindow.close();
+            }
             infoWindow.open(map, marker);
+            currentOpenInfoWindow = infoWindow;
         });
     });
 

@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 async def bus_datas(db: AsyncSession, realtime_data):
     try:
-        # 使用 selectinload 代替 joinedload
         query = (
             select(Station)
             .options(selectinload(Station.bus_routes))
@@ -21,14 +20,12 @@ async def bus_datas(db: AsyncSession, realtime_data):
         result = await db.execute(query)
         stations = result.scalars().unique().all()
 
-        # 使用字典來存儲實時數據，提高查找效率
         realtime_dict = {}
         for realtime_group in realtime_data:
             for rt in realtime_group:
                 key = (rt["RouteName"]["Zh_tw"], rt["StopName"]["Zh_tw"])
                 realtime_dict[key] = rt
 
-        # 使用 defaultdict 簡化數據結構初始化
         integrated_data = defaultdict(list)
 
         for station in stations:
