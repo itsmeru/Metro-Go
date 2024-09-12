@@ -1,4 +1,4 @@
-import {position} from "./globalVar.js";
+import {position,serverName} from "./globalVar.js";
 document.addEventListener('DOMContentLoaded', (event) => {
 
     const parkingButton = document.getElementById('ParkingButton');
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 
 async function initMap() {
-    let res = await fetch(`/api/mrt/parking/${position}`);
+    let res = await fetch(`${serverName}/api/mrt/parking/${position}`);
     let result = await res.json();
     let parking_data = Object.values(result)[0];
     document.getElementById('currentPosition').textContent = `目前位置：${position}`;

@@ -45,7 +45,7 @@ async def get_db():
 
 
 
-redis_pool = ConnectionPool(host="172.31.9.153", port=6379, db=1, max_connections=10)
+redis_pool = ConnectionPool(host="redis", port=6379, db=1, max_connections=10)
 
 def get_redis_connection():
     return redis.Redis(connection_pool=redis_pool)

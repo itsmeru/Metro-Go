@@ -177,18 +177,18 @@ class DataPipeline:
             except Exception as e:
                 print(f"An error occurred during bus data processing: {e}")
             await asyncio.sleep(interval)
-    async def wait_for_consumer(self, timeout=300):  
-        start_time = asyncio.get_event_loop().time()
-        while True:
-            if os.path.exists("/tmp/kafka_consumer_ready"):
-                print("Consumer is ready. Starting producer tasks.")
-                return
-            if asyncio.get_event_loop().time() - start_time > timeout:
-                raise TimeoutError("Consumer did not become ready in time")
-            await asyncio.sleep(1)
+    # async def wait_for_consumer(self, timeout=300):  
+    #     start_time = asyncio.get_event_loop().time()
+    #     while True:
+    #         if os.path.exists("/tmp/kafka_consumer_ready"):
+    #             print("Consumer is ready. Starting producer tasks.")
+    #             return
+    #         if asyncio.get_event_loop().time() - start_time > timeout:
+    #             raise TimeoutError("Consumer did not become ready in time")
+    #         await asyncio.sleep(1)
 
     async def start_tasks(self, bike_interval, metro_interval, bus_interval):
-        await self.wait_for_consumer()
+        # await self.wait_for_consumer()
         await asyncio.gather(
             self.bike_data_task(bike_interval),
             self.metro_data_task(metro_interval),

@@ -1,7 +1,7 @@
 import {getStation,getTicket,getStationTimes,haversineDistance } from "./getFunction.js";
 import { subscribeToStation, unsubscribeFromStation, subscribeToBike, unsubscribeFromBike,subscribeToBus,unsubscribeFromBus} from "./websockets.js";
 import { lines, lineCoordinates } from "./coord.js"
-import { currentDisplay, currentTicket, encodeName, decodeName, updateVar, svg } from "./globalVar.js"
+import { currentDisplay, currentTicket, encodeName, decodeName, updateVar, svg, serverName } from "./globalVar.js"
 import { updateTickets, updateTimes } from "./updateStatus.js"
 import { createCountdownCircle, updateCountdownCircle } from "./circle.js"
 import { getCurrentPosition} from "./gps.js";
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let startStation = startPointDisplay.split(" ")[1];
         let endStation= endPointDisplay.split(" ")[1];
         
-        const url = `/api/mrt/planning?start_station_id=${encodeURIComponent(startStationId)}&end_station_id=${encodeURIComponent(endStationId)}`;
+        const url = `${serverName}/api/mrt/planning?start_station_id=${encodeURIComponent(startStationId)}&end_station_id=${encodeURIComponent(endStationId)}`;
         try {
             const response = await fetch(url, {
                 method: 'GET',
@@ -205,10 +205,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const routeGroup = svg.append('g')
             .attr('class', 'route-group')
             .attr('opacity', 1);
-    
-    
+        
        
         data.options.forEach((option, pathIndexs) => {
+
             const pathElement = document.createElement('div');
             pathElement.className = 'path';
     
@@ -218,13 +218,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const totalMinutes = Math.floor(option.total_time / 60);
             const totalSeconds = Math.round(option.total_time % 60);
             const arrivalTime = new Date(option.arrival_time);
-         
+            
             optionElement.innerHTML = `
                 <button id="refreshButton" aria-label="更新時間">
                     <i class="fas fa-sync-alt"></i>
                 </button>
-                <p>總行程「時間」: ${totalMinutes} 分 ${totalSeconds} 秒</p>
-                <p>預計到達「時間」: 
+                <p>總行程時長： ${totalMinutes} 分 ${totalSeconds} 秒</p>
+                <p>預計到達時間： 
                 ${new Date(arrivalTime).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', timeZone: 'Asia/Taipei', hour12: false})} 
                 </p>
             `;
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     stationCode = detail.station_id;
                     stationColor = getLineColor(stationCode);
                     detailItem.innerHTML = `
-                        <span class="line-color">${detail.station}站</span>
+                        <span class="line-color">${detail.station}</span>
                         <div>等待 ${minutes} 分 ${seconds} 秒, 往<span class="direction-color">${detail.direction}</span>方向</div>
                         <div>搭乘 
                         ${new Date(detail.train_time).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', timeZone: 'Asia/Taipei', hour12: false})} 
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     stationCode = detail.station_id;
                     stationColor = getLineColor(stationCode);
                     detailItem.innerHTML = `
-                        <span class="line-color">${detail.to_station}站</span>
+                        <span class="line-color">${detail.to_station}</span>
                         <div>抵達時間: 
                         ${new Date(arrivalTime).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit', timeZone: 'Asia/Taipei', hour12: false})} 
                         </div>
@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     stationCode = detail.station_id;
                     stationColor = getLineColor(stationCode);
                     detailItem.innerHTML = `
-                        <span class="line-color">${detail.station}站</span>
+                        <span class="line-color">${detail.station}</span>
                         <div>轉乘步行約 ${minutes} 分鐘</div>
                     `;
                 

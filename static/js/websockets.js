@@ -3,7 +3,7 @@ let latestData = new Map();
 let subscribers = new Map();
 let cache = new Map();
 
-const WEBSOCKET_URL = "ws://localhost:8765";  // 使用單一端口
+const WEBSOCKET_URL = "wss://worker.ruru888.com:8765";  // 使用單一端口
 const reconnectInterval = 5000;
 
 function connectWebSocket() {

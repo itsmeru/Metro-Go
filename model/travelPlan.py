@@ -52,7 +52,9 @@ class MetroSystem:
 
         return metro_on_path
 
-    def get_direction(self, current_station: str, next_station: str, line: str) :
+    def get_direction(self, current_station: str, next_station: str, line: str,last_station:str) :
+        if last_station in ["O50", "O51", "O52", "O53", "O54"]:
+            return "O54","蘆洲站"
         line_stations = self.get_line_stations(line)
         current_index = line_stations.index(current_station)
         next_index = line_stations.index(next_station)
@@ -144,12 +146,16 @@ class MetroSystem:
             current_time = start_time
             i = 0
             flag = False
+            last_flag = False
             while i < len(path)-1:
                 current_station = path[i]
                 next_station = path[i + 1]
+                if i > 0 and path[i-1]=="O11":
+                    last_flag = True
+
                 # 找出從當前站點到下一站點的線路
                 line = next((info[1] for info in self.graph[current_station] if info[0] == next_station), None)
-                if current_station == "O12" and (next_station == "O50" or next_station == "O13"):
+                if (current_station == "O12" and last_flag is False)  and (next_station == "O50" or next_station == "O13"):
                     flag = True
                 # 如果是轉乘，獲取轉乘時間
                 if i == 0 or line == "轉乘" or flag:
@@ -175,14 +181,13 @@ class MetroSystem:
                             current_station = path[i]
                             next_station = path[i + 1]
                             line = next((info[1] for info in self.graph[current_station] if info[0] == next_station), None)
+
                         else:
                             break
                     # 獲取行進方向
-                    direction_code, direction = self.get_direction(current_station, next_station, line)
-
+                    direction_code, direction = self.get_direction(current_station, next_station, line,path[-1])
                     # 獲取下一班車信息
                     next_trains = await self.get_next_trains(current_station, line, direction, direction_code, current_time, redis)
-                    print(next_trains)
                     # 找到第一班適合的列車  
                     suitable_train = next((train for train in next_trains if train['arrival_time'] > current_time), None)
             
@@ -222,7 +227,7 @@ class MetroSystem:
                 # 移動到下一個站點
 
                 i += 1
-                if ((path[-1]== "R22A" or path[-1]== "G03A") and (current_station== "R22" or current_station== "G03")) or current_station== "R22A"or current_station== "G03A" :
+                if ((path[-1]== "R22A" and current_station== "R21") or (path[-1]== "G03A" and current_station== "G04")) or current_station== "R22A"or current_station== "G03A" :
                     flag = True
                 else:
                     flag = False
@@ -264,6 +269,7 @@ class MetroSystem:
 
         while queue:
             (cost, station, path) = heapq.heappop(queue)
+        
             if station == end or is_same_station(station, end):
                 return path + [station]  # 找到最佳路徑，直接返回
 
@@ -273,7 +279,8 @@ class MetroSystem:
 
                 for next_station, line, edge_cost in self.graph[station]:
                     if next_station not in new_path:
-                        total_cost = cost + edge_cost 
+                        travel_time = await self.get_travel_time(station,next_station)
+                        total_cost = int(cost + edge_cost) + travel_time
                         heapq.heappush(queue, (total_cost, next_station, new_path))
 
         return []  
