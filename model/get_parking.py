@@ -1,27 +1,22 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy.future import select
+from sqlalchemy.exc import SQLAlchemyError
 from db.models import Station, ParkingLot
-from db.db_set import get_db
+import logging
 
-router = APIRouter()
-
-@router.get("/api/mrt/parking/{station}")
-async def parking(station: str, db: AsyncSession = Depends(get_db)):
+async def getParking(db, station: str) :
     try:
         query = select(Station, ParkingLot).join(ParkingLot, Station.id == ParkingLot.station_id).where(Station.name == station)
         result = await db.execute(query)
         parking_data = result.fetchall()
         
         if not parking_data:
-            return {"message": "No parking data found for this station"}
+            return 404, {"message": "No parking data found for this station"}
       
         station_info = {
             "station_latitude": parking_data[0].Station.latitude,
             "station_longitude": parking_data[0].Station.longitude,
         }
         
-        # 提取所有停車場信息
         parking_lots = [
             {
                 "parking_lot_name": row.ParkingLot.name,
@@ -31,14 +26,19 @@ async def parking(station: str, db: AsyncSession = Depends(get_db)):
             for row in parking_data
         ]
         
-        # 組合最終結果
-        return {
+        response_data = {
             parking_data[0].Station.name: {
                 **station_info,
                 "parking_lots": parking_lots
             }
         }
+        
+        return 200, response_data
+    
+    except SQLAlchemyError as e:
+        logging.error(f"Database error: {str(e)}")
+        return 500, {"error": "Database error occurred"}
     
     except Exception as e:
-        print(f"Error retrieving data: {e}")
-        raise
+        logging.error(f"Unexpected error: {str(e)}")
+        return 500, {"error": "Internal server error"}

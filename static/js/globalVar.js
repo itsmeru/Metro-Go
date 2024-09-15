@@ -6,7 +6,9 @@ export let userLat = 0;
 export let userLon = 0;
 export let tripPlannerActive = false;
 export let svg = d3.select('#metro-map');
-export const serverName = "https://api.ruru888.com";
+// export const serverName = "https://api.ruru888.com";
+export const serverName = "";
+
 
 export function encodeName(name) {
     return name.replace(/\//g, '-');

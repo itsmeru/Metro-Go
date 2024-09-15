@@ -1,14 +1,16 @@
 import asyncio
 import os
 import sys
-from typing import List, Tuple, Dict, Optional
+from sqlalchemy.future import select
+from typing import List, Tuple, Dict
 from datetime import datetime, timedelta
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from collections import defaultdict
 import heapq
 import json
-from model.station_time import get_station_time
+from model.get_station_time import get_station_time
 from db.db_set import engine, get_redis_connection
+from db.models import MRTStation
 
 class MetroSystem:
     def __init__(self, lines: List[Tuple[str, List[str]]], station_names: Dict[str, str], transfer_stations: Dict[str, List[str]], transfer_times: Dict[str, int]):
@@ -298,9 +300,6 @@ lines = [
     ("Y", ["Y07", "Y08", "Y09", "Y10", "Y11", "Y12", "Y13", "Y14", "Y15", "Y16", "Y17", "Y18", "Y19", "Y20"])
 ]
 
-# 站點名稱數據
-with open("./model/line-name.json", "r", encoding="utf-8") as f:
-    station_names = json.load(f)
 
 # 轉乘站數據
 transfer_stations = {
@@ -351,12 +350,16 @@ transfer_times = {
     "頭前庄": 6
 }
 
-async def get_travel_plan(start,end):
+async def get_travel_plan(db,start,end):
+    query= select(MRTStation.station_id,MRTStation.station_name)
+    result = await db.execute(query)
+    stations =  result.fetchall()
+    station_names = {station_id: station_name for station_id, station_name in stations}
     metro = MetroSystem(lines, station_names, transfer_stations, transfer_times)
     redis = get_redis_connection()
     
-    start = start # 例如: "O54" 圓山站
-    end = end # 例如: "G13" 龍山寺站
+    start = start 
+    end = end 
     start_time = datetime.now()
     try:
         paths = await metro.find_paths(start, end)
@@ -386,14 +389,14 @@ async def get_travel_plan(start,end):
                             transfer_minutes, transfer_seconds = divmod(int(detail['time']), 60)
                             print(f"    在 {detail['station']} 站轉乘，耗時 {transfer_minutes} 分 {transfer_seconds} 秒")
                             print(f"    轉乘完成時間: {detail['arrival_time'].strftime('%H:%M:%S')}")
-                    print()
-            return processed_paths
+            return 200, {"result": processed_paths}
                 
 
         else:
-            print(f"無法找到從 {station_names[start]} 到 {station_names[end]} 的路線")
+            return 404, {"message": f"無法找到從 {station_names[start]} 到 {station_names[end]} 的路線"}
     except Exception as e:
-        print(f"發生錯誤：{e}")
+        return 500, {"message":f"發生錯誤：{e}"}
+
     finally:
         await engine.dispose()
     

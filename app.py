@@ -1,7 +1,8 @@
 from fastapi import *
 from fastapi.staticfiles import StaticFiles
+from controller import get_mrt_name, get_parking, get_plan, get_ticket,get_time
+from view import staticPage
 from fastapi.middleware.cors import CORSMiddleware
-from controller import getMrtName,getTicket,getTime,getParking,getPlan
 from db.db_set import engine, get_redis_connection,redis_pool
 import logging
 
@@ -9,11 +10,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
-# app.mount("/static", StaticFiles(directory="static"), name="static")
+app = FastAPI(title="MRT API")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 origins = [
     "https://ruru888.com",
-    "http://localhost:3000", 
+    "http://localhost:8000", 
 ]
 
 app.add_middleware(
@@ -50,9 +51,10 @@ async def shutdown_event():
         
 
 
-app.include_router(getMrtName.router)
-app.include_router(getTicket.router)
-app.include_router(getTime.router)
-app.include_router(getParking.router)
-app.include_router(getPlan.router)
+app.include_router(get_mrt_name.router)
+app.include_router(get_ticket.router)
+app.include_router(get_time.router)
+app.include_router(get_parking.router)
+app.include_router(get_plan.router)
+app.include_router(staticPage.router)
 

@@ -30,31 +30,31 @@ bus_topic = "bus_data"
 connected = set()
 redis = get_redis_connection()
 
-# 新增：用於跟踪最後一次接收數據的時間
+# 最後一次接收數據的時間
 last_data_time = {}
 
 async def process_and_send_data(data, data_type):
     try:
+        current_time = datetime.now()
         if data:
             redis.set(f"{data_type}_data", json.dumps(data))
             await send_to_websockets(data, data_type)
-            last_data_time[data_type] = datetime.now()
+            last_data_time[data_type] = current_time
             logger.info(f"{data_type.capitalize()} data cached and sent successfully")
         else:
             # 如果沒有數據，發送一個特殊的消息
-            no_data_message = {"no_data": True, "last_update": last_data_time.get(data_type, "Unknown")}
+            no_data_message = {
+                "no_data": True,
+                "last_update": last_data_time.get(data_type, current_time.isoformat()),
+                "current_time": current_time.isoformat()
+            }
             await send_to_websockets(no_data_message, data_type)
             logger.info(f"No {data_type} data available, sent no-data message")
+        
+        # 更新最後數據時間，即使沒有數據
+        last_data_time[data_type] = current_time
     except Exception as e:
         logger.error(f"Error in process_and_send_{data_type}_data: {e}", exc_info=True)
-
-async def load_json_file(filename):
-    try:
-        with open(filename, "r", encoding="utf-8") as file:
-            return json.load(file)
-    except Exception as e:
-        logger.error(f"Error loading file {filename}: {e}")
-        return None
 
 async def process_and_send_bus_data(bus_data):
     try:
@@ -97,6 +97,18 @@ async def handle_websocket(websocket):
                     "type": data_type,
                     "data": json.loads(cached_data)
                 }))
+            else:
+                # 如果沒有緩存數據，發送 no_data 消息
+                current_time = datetime.now()
+                no_data_message = {
+                    "type": data_type,
+                    "data": {
+                        "no_data": True,
+                        "last_update": last_data_time.get(data_type, current_time.isoformat()),
+                        "current_time": current_time.isoformat()
+                    }
+                }
+                await websocket.send(json.dumps(no_data_message))
         
         await websocket.wait_closed()
     finally:
@@ -155,14 +167,13 @@ async def setup_kafka_consumers(topics, group_id):
         consumers[topic] = consumer
     return consumers
 
-
 async def check_data_freshness():
     while True:
         current_time = datetime.now()
         for data_type in ['bike', 'station', 'bus']:
             last_time = last_data_time.get(data_type)
-            if last_time and (current_time - last_time) > timedelta(minutes=10):
-                logger.warning(f"No fresh {data_type} data for more than 10 minutes")
+            if not last_time or (current_time - last_time) > timedelta(minutes=10):
+                logger.warning(f"No fresh {data_type} data for more than 10 minutes or no data received yet")
                 await process_and_send_data(None, data_type)
         await asyncio.sleep(60)  # 每分鐘檢查一次
 

@@ -10,9 +10,9 @@ from dotenv import load_dotenv
 load_dotenv()
 logging.basicConfig()
 logging.getLogger('sqlalchemy.engine').setLevel(logging.ERROR)
-DATABASE_URL = f"mysql+aiomysql://{os.getenv('RDS_USER')}:{os.getenv('RDS_PASSWORD')}@{os.getenv('RDS_HOST')}:{os.getenv('RDS_PORT')}/{os.getenv('RDS_METRO')}"
+# DATABASE_URL = f"mysql+aiomysql://{os.getenv('RDS_USER')}:{os.getenv('RDS_PASSWORD')}@{os.getenv('RDS_HOST')}:{os.getenv('RDS_PORT')}/{os.getenv('RDS_METRO')}"
 
-# DATABASE_URL = f"mysql+aiomysql://root:{os.getenv('LOCAL_DB_PWD')}@mydb:3306/metro"
+DATABASE_URL = f"mysql+aiomysql://root:{os.getenv('LOCAL_DB_PWD')}@mydb:3306/metro"
 
 
 

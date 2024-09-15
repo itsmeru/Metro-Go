@@ -462,8 +462,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error("No element with class 'dynamic-info' found");
             return;
         }
+        
 
         try {
+            if (info.noData) {
+                dynamicInfo.innerHTML = `
+                    <h2>列車進站動態</h2>
+                    <div class="update-info">
+                        <div class="current-location">現在位置: ${stationName}</div>
+                        <div class="no-data-message">目前沒有可用的數據</div>
+                        <div class="last-update">最後更新: ${new Date(info.lastUpdate).toLocaleString()}</div>
+                    </div>
+                `;
+                return;
+            }
             dynamicInfo.innerHTML = `
                 <h2>列車進站動態</h2>
                 <div class="update-info">
@@ -526,6 +538,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         
        
         try {
+            if (info.noData) {
+                dynamicInfo.innerHTML = `
+                    <h2>YouBike 動態</h2>
+                    <div class="update-info">
+                        <div class="current-location">現在位置: ${stationName}</div>
+                        <div class="no-data-message">目前沒有可用的 YouBike 數據</div>
+                        <div class="last-update">最後更新: ${new Date(info.lastUpdate).toLocaleString()}</div>
+                    </div>
+                `;
+                return;
+            }
+    
             dynamicInfo.innerHTML = `
                 <h2>YouBike 動態</h2>
                 <div class="update-info">
@@ -645,6 +669,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     
         try {
+            if (info.noData) {
+                dynamicInfo.innerHTML = `
+                    <h2>Bus 動態</h2>
+                    <div class="update-info">
+                        <div class="current-location">現在位置: ${stationName}</div>
+                        <div class="no-data-message">目前沒有可用的公車數據</div>
+                        <div class="last-update">最後更新: ${new Date(info.lastUpdate).toLocaleString()}</div>
+                    </div>
+                `;
+                return;
+            }
+    
             dynamicInfo.innerHTML = `
                 <h2>Bus 動態</h2>
                 <div class="update-info">
