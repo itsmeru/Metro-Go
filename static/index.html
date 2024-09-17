@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCcvlqEwKkX0nXyIPWw_svvJ-VDit467AI"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="./static/css/index.css" />
+    <title>Metro</title>
+</head>
+<body>
+    <nav>
+        <div class="title">Metro GO</div>
+    </nav>
+    <div class="main-content">
+        <div class="map-container">
+            <div class="map-overlay">
+                <button id="ticketButton" data-ticket="full_ticket_price" value="ticket">一般票價</button>
+                <button id="seniorButton" data-ticket="senior_card_price" value="ticket">敬老卡/新北市兒童票價</button>
+                <button id="kidsButton" data-ticket="taipei_child_discount" value="ticket">台北市兒童票價</button>
+                <button id="timeButton" value="time">旅程時間</button>
+            </div>
+            <div class="time-info">顯示的旅程時間僅包含列車行駛及轉乘的步行時間，不包含候車時間</div>
+        
+            <svg id="metro-map" viewBox="-100 -190 1400 1920" preserveAspectRatio="xMidYMid meet"></svg>
+            
+        </div>
+        <div class="side-panel">
+            <button id="ParkingButton">查看停車資訊</button>
+            <button id="tripPlanButton">旅程規劃</button>
+            <div id="routeDisplay" style="display: none;"></div>
+            <div class="info-container">
+                <div class="tab-container">
+                    <button class="tab-button active" data-tab="train">列車進站動態</button>
+                    <button class="tab-button" data-tab="bike">YouBike 動態</button>
+                    <button class="tab-button" data-tab="bus">公車動態</button>
+                </div>
+                <div id="trainTab" class="tab-content active">
+                    <div class="dynamic-info">
+                        <h2>列車進站動態</h2>
+                    </div>
+                </div>
+                <div id="bikeTab" class="tab-content">
+                    <div class="dynamic-bike">
+                        <h2>YouBike 動態</h2>
+                    </div>
+                </div>
+                <div id="busTab" class="tab-content">
+                    <div class="dynamic-bus">
+                        <h2>公車動態</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="parkingModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>停車資訊</h2>
+            <p id="currentPosition"></p>
+            <div id="map"></div>
+        </div>
+    </div>
+    <script type="module" src="/static/js/index.js" defer></script>
+    <script type="module" src="/static/js/gps.js" defer></script>
+    <script type="module" src="/static/js/websockets.js" defer></script>
+    <script type="module" src="/static/js/script.js" defer></script>
+</body>
+</html>

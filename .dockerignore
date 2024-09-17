@@ -1,0 +1,39 @@
+# 共同的忽略項
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.DS_Store
+*.log
+
+# .gitignore 特定項
+venv/
+*.sqlite3
+*.db
+
+# .dockerignore 特定項
+.git/
+.gitignore
+README.md
+tests/
+docs/
+
+# 項目特定文件（根據需要調整）
+once
+kafka_consumer.py
+kafka_producer.py
+kafkaInfo.md
+supervisord.log
+docker-compose.yml
+Dockerfile
+data_json
+mysql_data
+bikeTest.py
+cafe
+getTime
+getTicketFile
+static
+view
+insert.py
+
