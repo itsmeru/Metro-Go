@@ -3,8 +3,7 @@ let latestData = new Map();
 let subscribers = new Map();
 let cache = new Map();
 
-// const WEBSOCKET_URL = "wss://worker.ruru888.com:8765";  // 使用單一端口
-const WEBSOCKET_URL = "ws://localhost:8765";
+const WEBSOCKET_URL = "wss://api.ruru888.com:8765/"; 
 const reconnectInterval = 5000;
 
 function connectWebSocket() {
@@ -16,12 +15,7 @@ function connectWebSocket() {
         let message = JSON.parse(event.data);
 
         if (['station', 'bike', 'bus'].includes(message.type)) {
-            if (message.data.no_data) {
-                console.log(`No data available for ${message.type}. Last update: ${message.data.last_update}`);
-                latestData.set(message.type, { noData: true, lastUpdate: message.data.last_update, currentTime: message.data.current_time });
-            } else {
-                latestData.set(message.type, updateDynamicInfo(message.type, message.data));
-            }
+            latestData.set(message.type, updateDynamicInfo(message.type, message.data));
             notifySubscribers(message.type);
         } else {
             console.log("Received unknown data type:", message.type);
@@ -42,7 +36,7 @@ function subscribe(type, stationName, callback) {
     }
     subscribers.get(type).set(stationName, callback);
 
-    if (cache.get(type)?.has(stationName)) {
+    if (cache.get(type)?.has(stationName)) {        
         callback(cache.get(type).get(stationName), stationName);
     }
 }
@@ -53,28 +47,25 @@ function unsubscribe(type, stationName) {
 
 function notifySubscribers(type) {
     const data = latestData.get(type);
-    if (data.noData) {
-        subscribers.get(type)?.forEach((callback) => {
-            callback({ noData: true, lastUpdate: data.lastUpdate, currentTime: data.currentTime });
-        });
-    } else {
-        subscribers.get(type)?.forEach((callback, stationName) => {
-            const info = data[stationName];
-            if (info) callback(info, stationName);
-        });
-    }
+    subscribers.get(type)?.forEach((callback, stationName) => {
+        const info = data[stationName];
+        if (info) callback(info, stationName);
+    });
 }
 
 function updateDynamicInfo(type, data) {
+
     let liveData = {};
     Object.entries(data).forEach(([stationName, info]) => {
         liveData[stationName] = { ...info };
         if (!cache.has(type)) {
             cache.set(type, new Map());
         }
-        cache.get(type).set(stationName, info);
+        cache.get(type).set(stationName, info);        
     });
     return liveData;
+   
+    
 }
 
 connectWebSocket();

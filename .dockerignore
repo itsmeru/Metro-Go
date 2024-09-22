@@ -34,6 +34,6 @@ cafe
 getTime
 getTicketFile
 static
-view
 insert.py
+worker
 
