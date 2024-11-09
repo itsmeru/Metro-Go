@@ -44,7 +44,7 @@ A subway information query platform using Kafka to establish real-time data pipe
 </div>
 
 ## 🔗 Live Demo
-[![Metro Go](https://img.shields.io/badge/Metro_Go-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://trip.ruru888.com/)
+[![Metro Go](https://img.shields.io/badge/Metro_Go-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://ruru888.com/)
 
 ### 📸 Demo Features
 - Route optimization using Dijkstra's algorithm with heapq
