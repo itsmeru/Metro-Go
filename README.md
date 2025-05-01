@@ -43,8 +43,6 @@ A subway information query platform using Kafka to establish real-time data pipe
    <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/javascript/javascript-original.svg" alt="javascript" width="40" height="40"/></a>
 </div>
 
-## 🔗 Live Demo
-[![Metro Go](https://img.shields.io/badge/Metro_Go-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://ruru888.com/)
 
 ### 📸 Demo Features
 - Route optimization using Dijkstra's algorithm with heapq
